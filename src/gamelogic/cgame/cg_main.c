@@ -707,8 +707,6 @@ these will change when following another player
 */
 static void CG_SetUIVars( void )
 {
-	playerState_t *ps;
-
 	if ( !cg.snap )
 	{
 		return;
@@ -1476,9 +1474,6 @@ static void CG_RegisterGraphics( void )
 	cgs.media.healthCrossPoisoned = trap_R_RegisterShader("ui/assets/neutral/cross_poison",
 							      (RegisterShaderFlags_t) RSF_DEFAULT);
 
-	cgs.media.upgradeClassIconShader = trap_R_RegisterShader("icons/icona_upgrade",
-								 (RegisterShaderFlags_t) RSF_DEFAULT);
-
 	cgs.media.desaturatedCgrade = trap_R_RegisterShader("gfx/cgrading/desaturated",
 								 (RegisterShaderFlags_t) ( RSF_NOMIP | RSF_NOLIGHTSCALE ) );
 
@@ -1510,6 +1505,7 @@ static void CG_RegisterGraphics( void )
 
 	cgs.media.alienEvolvePS = CG_RegisterParticleSystem( "alienEvolvePS" );
 	cgs.media.alienAcidTubePS = CG_RegisterParticleSystem( "alienAcidTubePS" );
+	cgs.media.alienBoosterPS = CG_RegisterParticleSystem( "alienBoosterPS" );
 
 	cgs.media.jetPackThrustPS = CG_RegisterParticleSystem( "jetPackAscendPS" );
 
@@ -1706,9 +1702,25 @@ static void CG_RegisterClients( void )
 		cgs.media.larmourTorsoSkin = trap_R_RegisterSkin( "models/players/human_base/body_helmetlarmour.skin" );
 	}
 
-	cgs.media.jetpackModel = trap_R_RegisterModel( "models/players/human_base/jetpack.md3" );
+	cgs.media.jetpackModel = trap_R_RegisterModel( "models/players/human_base/jetpack.iqm" );
 	cgs.media.jetpackFlashModel = trap_R_RegisterModel( "models/players/human_base/jetpack_flash.md3" );
-	cgs.media.battpackModel = trap_R_RegisterModel( "models/players/human_base/battpack.md3" );
+	cgs.media.radarModel = trap_R_RegisterModel( "models/players/human_base/battpack.md3" ); // HACK: Use old battpack
+
+	CG_RegisterWeaponAnimation(
+	    &cgs.media.jetpackAnims[ JANIM_NONE ],
+	    "models/players/human_base/jetpack.iqm:idle",
+	    qfalse, qfalse, qfalse );
+
+
+	CG_RegisterWeaponAnimation(
+	    &cgs.media.jetpackAnims[ JANIM_SLIDEOUT ],
+	    "models/players/human_base/jetpack.iqm:slideout",
+	    qfalse, qfalse, qfalse );
+
+	CG_RegisterWeaponAnimation(
+	    &cgs.media.jetpackAnims[ JANIM_SLIDEIN ],
+	    "models/players/human_base/jetpack.iqm:slidein",
+	    qfalse, qfalse, qfalse );
 
 	cg.charModelFraction = 1.0f;
 	trap_UpdateScreen();
@@ -2117,12 +2129,10 @@ void CG_LoadMenus( const char *menuFile )
 {
 	char         *token;
 	char         *p;
-	int          len, start;
+	int          len;
 	fileHandle_t f;
 	static char  buf[ MAX_MENUDEFFILE ];
 	char         assetScale[ 20 ];
-
-	start = trap_Milliseconds();
 
 	len = trap_FS_FOpenFile( menuFile, &f, FS_READ );
 
@@ -2183,8 +2193,6 @@ void CG_LoadMenus( const char *menuFile )
 			}
 		}
 	}
-
-	// Com_Printf(_( "UI menu load time = %dms\n"), trap_Milliseconds() - start );
 }
 
 static qboolean CG_OwnerDrawHandleKey( int ownerDraw, int key )
@@ -2354,20 +2362,6 @@ static const char *CG_FeederItemText( int feederID, int index, int column, qhand
 					if ( sp->team == TEAM_HUMANS && sp->upgrade != UP_NONE )
 					{
 						*handle = cg_upgrades[ sp->upgrade ].upgradeIcon;
-					}
-					else if ( sp->team == TEAM_ALIENS )
-					{
-						switch ( sp->weapon )
-						{
-							case WP_ABUILD2:
-							case WP_ALEVEL2_UPG:
-							case WP_ALEVEL3_UPG:
-								*handle = cgs.media.upgradeClassIconShader;
-								break;
-
-							default:
-								break;
-						}
 					}
 				}
 

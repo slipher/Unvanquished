@@ -427,9 +427,14 @@ static void Svcmd_TeamWin_f( void )
 	trap_Argv( 0, cmd, sizeof( cmd ) );
 
 	team = G_TeamFromString( cmd );
-	if ( TEAM_ALIENS == team || TEAM_HUMANS == team )
+
+	if ( TEAM_ALIENS == team )
 	{
-		G_BaseSelfDestruct( team );
+		G_BaseSelfDestruct( TEAM_HUMANS );
+	}
+	if ( TEAM_HUMANS == team )
+	{
+		G_BaseSelfDestruct( TEAM_ALIENS );
 	}
 }
 
@@ -441,30 +446,6 @@ static void Svcmd_Evacuation_f( void )
 	G_notify_sensor_end( TEAM_NONE );
 	LogExit( "Evacuation." );
 	G_MapLog_Result( 'd' );
-}
-
-static void Svcmd_Armageddon_f( void )
-{
-	char arg[ 4 ];
-	int percent;
-
-	if ( trap_Argc() != 2 )
-	{
-		G_Printf( "usage: armageddon <percent>\n" );
-		return;
-	}
-
-	trap_Argv( 1, arg, sizeof( arg ) );
-	percent = atoi( arg );
-
-
-	if ( percent < 1 || percent > 100 )
-	{
-		G_Printf( "armageddon: Strength must be between 1 and 100\n" );
-		return;
-	}
-
-	G_Armageddon( percent / 100.0f );
 }
 
 static void Svcmd_MapRotation_f( void )
@@ -689,16 +670,6 @@ static void Svcmd_MessageWrapper( void )
 	}
 }
 
-static void Svcmd_ListMapsWrapper( void )
-{
-	Cmd_ListMaps_f( NULL );
-}
-
-static void Svcmd_ListRotationWrapper( void )
-{
-	G_PrintCurrentRotation( NULL );
-}
-
 static void Svcmd_MapLogWrapper( void )
 {
 	Cmd_MapLog_f( NULL );
@@ -720,7 +691,6 @@ static const struct svcmd
 	{ "admitDefeat",        qfalse, Svcmd_AdmitDefeat_f          },
 	{ "advanceMapRotation", qfalse, Svcmd_G_AdvanceMapRotation_f },
 	{ "alienWin",           qfalse, Svcmd_TeamWin_f              },
-	{ "armageddon",         qfalse, Svcmd_Armageddon_f           },
 	{ "asay",               qtrue,  Svcmd_MessageWrapper         },
 	{ "chat",               qtrue,  Svcmd_MessageWrapper         },
 	{ "cp",                 qtrue,  Svcmd_CenterPrint_f          },
@@ -735,8 +705,6 @@ static const struct svcmd
 	{ "humanWin",           qfalse, Svcmd_TeamWin_f              },
 	{ "layoutLoad",         qfalse, Svcmd_LayoutLoad_f           },
 	{ "layoutSave",         qfalse, Svcmd_LayoutSave_f           },
-	{ "listmaps",           qtrue,  Svcmd_ListMapsWrapper        },
-	{ "listrotation",       qtrue,  Svcmd_ListRotationWrapper    },
 	{ "loadcensors",        qfalse, G_LoadCensors                },
 	{ "m",                  qtrue,  Svcmd_MessageWrapper         },
 	{ "maplog",             qtrue,  Svcmd_MapLogWrapper          },

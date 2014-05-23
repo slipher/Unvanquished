@@ -568,7 +568,7 @@ gentity_t *G_ResolveEntityKeyword( gentity_t *self, char *keyword )
 	else if (!Q_stricmp(keyword, "$tracker"))
 		resolution = self->tracker;
 
-	if(!resolution->inuse)
+	if(!resolution || !resolution->inuse)
 		return NULL;
 
 	return resolution;
@@ -803,7 +803,7 @@ void G_CallEntity(gentity_t *targetedEntity, gentityCall_t *call)
 
 	targetedEntity->callIn = *call;
 
-	if(!targetedEntity->handleCall || !targetedEntity->handleCall(targetedEntity, call) && call->definition)
+	if((!targetedEntity->handleCall || !targetedEntity->handleCall(targetedEntity, call)) && call->definition)
 	{
 		switch (call->definition->actionType)
 		{

@@ -35,7 +35,7 @@ Maryland 20850 USA.
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
 
-#if !defined(DEDICATED) && !defined(BUILD_TTY_CLIENT)
+#ifdef BUILD_CLIENT
 #include <SDL_version.h>
 
 // Require a minimum version of SDL
@@ -54,6 +54,7 @@ Maryland 20850 USA.
 // Input subsystem
 void         IN_Init( void *windowData );
 void         IN_Frame( void );
+void         IN_FrameEnd( void );
 void         IN_Shutdown( void );
 void         IN_Restart( void );
 

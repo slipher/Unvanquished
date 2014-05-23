@@ -117,6 +117,67 @@ LIGHT SAMPLING
 =============================================================================
 */
 
+float R_InterpolateLightGrid( world_t *w, int from[3], int to[3],
+			      float *factors[3], vec3_t ambientLight,
+			      vec3_t directedLight, vec2_t lightDir ) {
+	float           totalFactor = 0.0f, factor;
+	float           *xFactor, *yFactor, *zFactor;
+	int             gridStep[ 3 ];
+	int             x, y, z;
+	bspGridPoint1_t *gp1;
+	bspGridPoint2_t *gp2;
+
+	VectorClear( ambientLight );
+	VectorClear( directedLight );
+	lightDir[ 0 ] = lightDir[ 1 ] = 0.0f;
+
+	gridStep[ 0 ] = 1;
+	gridStep[ 1 ] = w->lightGridBounds[ 0 ];
+	gridStep[ 2 ] = gridStep[ 1 ] * w->lightGridBounds[ 1 ];
+
+	for( x = from[ 0 ], xFactor = factors[ 0 ]; x <= to[ 0 ];
+	     x++, xFactor++ ) {
+		if( x < 0 || x > w->lightGridBounds[ 0 ] )
+			continue;
+
+		for( y = from[ 1 ], yFactor = factors[ 1 ]; y <= to[ 1 ];
+		     y++, yFactor++ ) {
+			if( y < 0 || y > w->lightGridBounds[ 1 ] )
+				continue;
+
+			for( z = from[ 2 ], zFactor = factors[ 2 ]; z <= to[ 2 ];
+			     z++, zFactor++ ) {
+				if( z < 0 || z > w->lightGridBounds[ 2 ] )
+					continue;
+
+				gp1 = w->lightGridData1 + x * gridStep[ 0 ] + y * gridStep[ 1 ] + z * gridStep[ 2 ];
+				gp2 = w->lightGridData2 + x * gridStep[ 0 ] + y * gridStep[ 1 ] + z * gridStep[ 2 ];
+
+				if ( !( gp1->ambient[ 0 ] || gp1->ambient[ 1 ] || gp1->ambient[ 2 ]) )
+				{
+					continue; // ignore samples in walls
+				}
+
+				factor = *xFactor * *yFactor * *zFactor;
+
+				totalFactor += factor;
+
+				lightDir[ 0 ] += factor * snorm8ToFloat( gp1->lightVecX );
+				lightDir[ 1 ] += factor * snorm8ToFloat( gp2->lightVecY );
+				
+				ambientLight[ 0 ] += factor * unorm8ToFloat( gp1->ambient[ 0 ] );
+				ambientLight[ 1 ] += factor * unorm8ToFloat( gp1->ambient[ 1 ] );
+				ambientLight[ 2 ] += factor * unorm8ToFloat( gp1->ambient[ 2 ] );
+				directedLight[ 0 ] += factor * unorm8ToFloat( gp2->directed[ 0 ] );
+				directedLight[ 1 ] += factor * unorm8ToFloat( gp2->directed[ 1 ] );
+				directedLight[ 2 ] += factor * unorm8ToFloat( gp2->directed[ 2 ] );
+			}
+		}
+	}
+
+	return totalFactor;
+}
+
 /*
 =================
 R_LightForPoint
@@ -124,17 +185,11 @@ R_LightForPoint
 */
 int R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir )
 {
-	int             i, j;
-	int             pos[ 3 ];
-	float           frac[ 3 ];
-	vec3_t          direction;
-	float           luminance;
-	float           ambientChroma[2];
-	float           directedChroma[2];
-	int             gridStep[ 3 ];
+	int             i;
+	int             from[ 3 ], to[ 3 ];
+	float           frac[ 3 ][ 2 ];
+	float           *factors[ 3 ] = { frac[ 0 ], frac[ 1 ], frac[ 2 ] };
 	float           totalFactor;
-	bspGridPoint1_t *gridPoint1;
-	bspGridPoint2_t *gridPoint2;
 
 	// bk010103 - this segfaults with -nolight maps
 	if ( tr.world->lightGridData1 == NULL ||
@@ -149,117 +204,56 @@ int R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, ve
 
 		v = point[ i ] - tr.world->lightGridOrigin[ i ];
 		v *= tr.world->lightGridInverseSize[ i ];
-		pos[ i ] = floor( v );
-		frac[ i ] = v - pos[ i ];
+		from[ i ] = floor( v );
+		frac[ i ][ 0 ] = v - from[ i ];
 
-		if ( pos[ i ] < 0 )
+		if ( from[ i ] < 0 )
 		{
-			pos[ i ] = 0;
-			frac[ i ] = 0.0f;
+			from[ i ] = 0;
+			frac[ i ][ 0 ] = 0.0f;
 		}
-		else if ( pos[ i ] >= tr.world->lightGridBounds[ i ] - 1 )
+		else if ( from[ i ] >= tr.world->lightGridBounds[ i ] - 1 )
 		{
-			pos[ i ] = tr.world->lightGridBounds[ i ] - 2;
-			frac[ i ] = 1.0f;
+			from[ i ] = tr.world->lightGridBounds[ i ] - 2;
+			frac[ i ][ 0 ] = 1.0f;
 		}
+
+		to[ i ] = from[ i ] + 1;
+		frac[ i ][ 1 ] = 1.0f - frac[ i ][ 0 ];
 	}
 
-	VectorClear( direction );
-	luminance = 0.0f;
-	ambientChroma[ 0 ] = 0.0f;
-	ambientChroma[ 1 ] = 0.0f;
-	directedChroma[ 0 ] = 0.0f;
-	directedChroma[ 1 ] = 0.0f;
-
-	// trilerp the light values
-	gridStep[ 0 ] = 1;
-	gridStep[ 1 ] = tr.world->lightGridBounds[ 0 ];
-	gridStep[ 2 ] = gridStep[ 1 ] * tr.world->lightGridBounds[ 1 ];
-	gridPoint1 = tr.world->lightGridData1 + pos[ 0 ] * gridStep[ 0 ] + pos[ 1 ] * gridStep[ 1 ] + pos[ 2 ] * gridStep[ 2 ];
-	gridPoint2 = tr.world->lightGridData2 + pos[ 0 ] * gridStep[ 0 ] + pos[ 1 ] * gridStep[ 1 ] + pos[ 2 ] * gridStep[ 2 ];
-
-	totalFactor = 0;
-
-	// trilinear sample the grids
-	for ( i = 0; i < 8; i++ )
-	{
-		float factor = 1.0f;
-		bspGridPoint1_t *gp1 = gridPoint1;
-		bspGridPoint2_t *gp2 = gridPoint2;
-
-		for ( j = 0; j < 3; j++ )
-		{
-			if ( i & ( 1 << j ) )
-			{
-				factor *= frac[ j ];
-				gp1 += gridStep[ j ];
-				gp2 += gridStep[ j ];
-			}
-			else
-			{
-				factor *= ( 1.0f - frac[ j ] );
-			}
-		}
-
-		if ( !gp1->luminance )
-		{
-			continue; // ignore samples in walls
-		}
-
-		totalFactor += factor;
-
-		direction[ 0 ] += factor * (float)(gp1->lightVec[ 0 ] - 128);
-		direction[ 1 ] += factor * (float)(gp1->lightVec[ 1 ] - 128);
-		direction[ 2 ] += factor * (float)(gp1->lightVec[ 2 ] - 128);
-		luminance += factor * (float)(gp1->luminance);
-
-		ambientChroma[ 0 ] += factor * (float)(gp2->ambientChroma[ 0 ] - 128);
-		ambientChroma[ 1 ] += factor * (float)(gp2->ambientChroma[ 1 ] - 128);
-		directedChroma[ 0 ] += factor * (float)(gp2->directedChroma[ 0 ] - 128);
-		directedChroma[ 1 ] += factor * (float)(gp2->directedChroma[ 1 ] - 128);
-	}
+	totalFactor = R_InterpolateLightGrid( tr.world, from, to, factors,
+					      ambientLight, directedLight,
+					      lightDir );
 
 	if ( totalFactor > 0 && totalFactor < 0.99 )
 	{
 		totalFactor = 1.0f / totalFactor;
 
-		VectorScale( direction, totalFactor, direction );
-		luminance *= totalFactor;
-		ambientChroma[ 0 ] *= totalFactor;
-		ambientChroma[ 1 ] *= totalFactor;
-		directedChroma[ 0 ] *= totalFactor;
-		directedChroma[ 1 ] *= totalFactor;
+		VectorScale( lightDir, totalFactor, lightDir );
+		VectorScale( ambientLight, totalFactor, ambientLight );
+		VectorScale( directedLight, totalFactor, directedLight );
 	}
 
-	direction[0] *= 1.0f / 127.0f;
-	direction[1] *= 1.0f / 127.0f;
-	direction[2] *= 1.0f / 127.0f;
-	luminance *= 1.0f / 255.0f;
-	ambientChroma[0] *= 1.0f / 254.0f;
-	ambientChroma[1] *= 1.0f / 254.0f;
-	directedChroma[0] *= 1.0f / 254.0f;
-	directedChroma[1] *= 1.0f / 254.0f;
+	// compute z-component of direction
+	lightDir[ 2 ] = 1.0f - fabsf( lightDir[ 0 ] ) + fabsf( lightDir[ 1 ] );
+	if( lightDir[ 2 ] < 0.0f ) {
+		float X = lightDir[ 0 ];
+		float Y = lightDir[ 1 ];
+		lightDir[ 0 ] = copysignf( 1.0f - fabs( Y ), X );
+		lightDir[ 1 ] = copysignf( 1.0f - fabs( X ), Y );
+	}
 
-	// unpack data
-	VectorNormalize2( direction, lightDir );
+	VectorNormalize( lightDir );
 
-	directedLight[ 0 ] = luminance * VectorLength( direction );
-	ambientLight[ 0 ] = luminance - directedLight[ 0 ];
-
-	if ( ambientLight[ 0 ] < r_forceAmbient->value )
+	if ( ambientLight[ 0 ] < r_forceAmbient->value &&
+	     ambientLight[ 1 ] < r_forceAmbient->value &&
+	     ambientLight[ 2 ] < r_forceAmbient->value )
 	{
 		ambientLight[ 0 ] = r_forceAmbient->value;
+		ambientLight[ 1 ] = r_forceAmbient->value;
+		ambientLight[ 2 ] = r_forceAmbient->value;
 	}
-
-	ambientLight[ 1 ] = ambientLight[ 0 ] + ambientChroma[ 0 ];
-	ambientLight[ 0 ] = ambientLight[ 0 ] - ambientChroma[ 0 ];
-	ambientLight[ 2 ] = ambientLight[ 0 ] - ambientChroma[ 1 ];
-	ambientLight[ 0 ] = ambientLight[ 0 ] + ambientChroma[ 1 ];
-
-	directedLight[ 1 ] = directedLight[ 0 ] + directedChroma[ 0 ];
-	directedLight[ 0 ] = directedLight[ 0 ] - directedChroma[ 0 ];
-	directedLight[ 2 ] = directedLight[ 0 ] - directedChroma[ 1 ];
-	directedLight[ 0 ] = directedLight[ 0 ] + directedChroma[ 1 ];
 
 //----(SA)  added
 	// cheats?  check for single player?
@@ -311,48 +305,6 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent, vec3_t forcedOrigin )
 }
 
 /*
-===============
-LogLight
-===============
-*/
-#if 0
-static void LogLight( trRefEntity_t *ent )
-{
-	int max1, max2;
-
-	if ( !( ent->e.renderfx & RF_FIRST_PERSON ) )
-	{
-		return;
-	}
-
-	max1 = ent->ambientLight[ 0 ];
-
-	if ( ent->ambientLight[ 1 ] > max1 )
-	{
-		max1 = ent->ambientLight[ 1 ];
-	}
-	else if ( ent->ambientLight[ 2 ] > max1 )
-	{
-		max1 = ent->ambientLight[ 2 ];
-	}
-
-	max2 = ent->directedLight[ 0 ];
-
-	if ( ent->directedLight[ 1 ] > max2 )
-	{
-		max2 = ent->directedLight[ 1 ];
-	}
-	else if ( ent->directedLight[ 2 ] > max2 )
-	{
-		max2 = ent->directedLight[ 2 ];
-	}
-
-	ri.Printf( PRINT_ALL, "amb:%i  dir:%i\n", max1, max2 );
-}
-
-#endif
-
-/*
 =================
 R_SetupEntityLighting
 
@@ -362,10 +314,6 @@ by the Calc_* functions
 */
 void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent, vec3_t forcedOrigin )
 {
-	//vec3_t          lightDir;
-	//vec3_t          lightOrigin;
-	//float           d;
-
 	// lighting calculations
 	if ( ent->lightingCalculated )
 	{
@@ -373,28 +321,6 @@ void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent, vec3_t
 	}
 
 	ent->lightingCalculated = qtrue;
-
-	/*
-	if(forcedOrigin)
-	{
-	        VectorCopy(forcedOrigin, lightOrigin);
-	}
-	else
-	{
-	        // trace a sample point down to find ambient light
-	        if(ent->e.renderfx & RF_LIGHTING_ORIGIN)
-	        {
-	                // separate lightOrigins are needed so an object that is
-	                // sinking into the ground can still be lit, and so
-	                // multi-part models can be lit identically
-	                VectorCopy(ent->e.lightingOrigin, lightOrigin);
-	        }
-	        else
-	        {
-	                VectorCopy(ent->e.origin, lightOrigin);
-	        }
-	}
-	*/
 
 	// if NOWORLDMODEL, only use dynamic lights (menu system, etc)
 	if ( !( refdef->rdflags & RDF_NOWORLDMODEL ) && tr.world
@@ -404,34 +330,6 @@ void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent, vec3_t
 	}
 	else
 	{
-#if 0
-
-		if ( !( refdef->rdflags & RDF_NOWORLDMODEL ) )
-		{
-			ent->ambientLight[ 0 ] = tr.worldEntity.ambientLight[ 0 ];
-			ent->ambientLight[ 1 ] = tr.worldEntity.ambientLight[ 1 ];
-			ent->ambientLight[ 2 ] = tr.worldEntity.ambientLight[ 2 ];
-		}
-		else
-		{
-			ent->ambientLight[ 0 ] = r_forceAmbient->value;
-			ent->ambientLight[ 1 ] = r_forceAmbient->value;
-			ent->ambientLight[ 2 ] = r_forceAmbient->value;
-		}
-
-		ent->directedLight[ 0 ] = ent->directedLight[ 1 ] = ent->directedLight[ 2 ] = tr.identityLight * ( 150.0f / 255.0f );
-
-		if ( ent->e.renderfx & RF_LIGHTING_ORIGIN )
-		{
-			VectorSubtract( ent->e.lightingOrigin, ent->e.origin, ent->lightDir );
-			VectorNormalize( ent->lightDir );
-		}
-		else
-		{
-			VectorCopy( tr.sunDirection, ent->lightDir );
-		}
-
-#else
 		//% ent->ambientLight[0] = ent->ambientLight[1] = ent->ambientLight[2] = tr.identityLight * 150;
 		//% ent->directedLight[0] = ent->directedLight[1] = ent->directedLight[2] = tr.identityLight * 150;
 		//% VectorCopy( tr.sunDirection, ent->lightDir );
@@ -445,10 +343,7 @@ void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent, vec3_t
 
 		VectorSet( ent->lightDir, -1, 1, 1.25 );
 		VectorNormalize( ent->lightDir );
-#endif
 	}
-
-#if 1
 
 	if ( ent->e.hilightIntensity )
 	{
@@ -465,40 +360,10 @@ void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent, vec3_t
 		ent->ambientLight[ 2 ] += tr.identityLight * 0.125f;
 	}
 
-#endif
-
-#if 0
-
-	// clamp ambient
-	for ( i = 0; i < 3; i++ )
-	{
-		if ( ent->ambientLight[ i ] > tr.identityLight )
-		{
-			ent->ambientLight[ i ] = tr.identityLight;
-		}
-	}
-
-#endif
-
-#if defined( COMPAT_ET )
-
 	if ( ent->e.entityNum < MAX_CLIENTS && ( refdef->rdflags & RDF_SNOOPERVIEW ) )
 	{
 		VectorSet( ent->ambientLight, 0.96f, 0.96f, 0.96f );  // allow a little room for flicker from directed light
 	}
-
-#endif
-
-	// Tr3B: keep it in world space
-
-	// transform the direction to local space
-	//% d = VectorLength(ent->directedLight);
-	//% VectorScale(ent->lightDir, d, lightDir);
-	//% VectorNormalize(lightDir);
-
-	//% ent->lightDir[0] = DotProduct(lightDir, ent->e.axis[0]);
-	//% ent->lightDir[1] = DotProduct(lightDir, ent->e.axis[1]);
-	//% ent->lightDir[2] = DotProduct(lightDir, ent->e.axis[2]);
 }
 
 /*
@@ -513,8 +378,6 @@ void R_SetupLightOrigin( trRefLight_t *light )
 
 	if ( light->l.rlType == RL_DIRECTIONAL )
 	{
-#if 1
-
 		if ( !VectorCompare( light->l.center, vec3_origin ) )
 		{
 			MatrixTransformPoint( light->transformMatrix, light->l.center, transformed );
@@ -524,7 +387,6 @@ void R_SetupLightOrigin( trRefLight_t *light )
 			VectorMA( light->l.origin, 10000, light->direction, light->origin );
 		}
 		else
-#endif
 		{
 			vec3_t down = { 0, 0, 1 };
 
@@ -568,22 +430,11 @@ void R_SetupLightLocalBounds( trRefLight_t *light )
 			{
 				int    j;
 				vec3_t farCorners[ 4 ];
-				//vec4_t      frustum[6];
 				const vec4_t *frustum = (const vec4_t *)light->localFrustum;
 
 				ClearBounds( light->localBounds[ 0 ], light->localBounds[ 1 ] );
 
 				// transform frustum from world space to local space
-
-				/*
-				for(j = 0; j < 6; j++)
-				{
-				        VectorCopy(light->frustum[j].normal, frustum[j]);
-				        frustum[j][3] = light->frustum[j].dist;
-
-				        MatrixTransformPlane2(light->viewMatrix, frustum[j]);
-				}
-				*/
 				R_CalcFrustumFarCorners( frustum, farCorners );
 
 				if ( !VectorCompare( light->l.projStart, vec3_origin ) )
@@ -664,21 +515,6 @@ void R_SetupLightView( trRefLight_t *light )
 				MatrixAffineInverse( light->transformMatrix, light->viewMatrix );
 				break;
 			}
-
-			/*
-			case RL_PROJ:
-			{
-			        matrix_t        viewMatrix;
-
-			        MatrixAffineInverse(light->transformMatrix, viewMatrix);
-
-			        // convert from our coordinate system (looking down X)
-			        // to OpenGL's coordinate system (looking down -Z)
-			        MatrixMultiply(quakeToOpenGLMatrix, viewMatrix, light->viewMatrix);
-			        break;
-			}
-			*/
-
 		default:
 			ri.Error( ERR_DROP, "R_SetupLightView: Bad rlType" );
 	}
@@ -936,12 +772,6 @@ void R_SetupLightProjection( trRefLight_t *light )
 				float  a, b, ofs, dist;
 				vec4_t targetGlobal;
 
-				// This transformation remaps the X,Y coordinates from [-1..1] to [0..1],
-				// presumably needed because the up/right vectors extend symmetrically
-				// either side of the target point.
-				//MatrixSetupTranslation(proj, 0.5f, 0.5f, 0);
-				//MatrixMultiplyScale(proj, 0.5f, 0.5f, 1);
-
 				rLen = VectorNormalize2( light->l.projRight, right );
 				uLen = VectorNormalize2( light->l.projUp, up );
 
@@ -1011,8 +841,6 @@ void R_SetupLightProjection( trRefLight_t *light )
 				//FIXME ?
 				VectorScale( falloff, 1.0f / falloffLen, falloff );
 
-				//light->falloffLength = 1;
-
 				Vector4Set( lightProject[ 3 ], falloff[ 0 ], falloff[ 1 ], falloff[ 2 ], -DotProduct( start, falloff ) );
 
 				// we want the planes of s=0, s=q, t=0, and t=q
@@ -1032,22 +860,6 @@ void R_SetupLightProjection( trRefLight_t *light )
 				VectorNegate( lightProject[ 3 ], frustum[ FRUSTUM_FAR ] );
 				frustum[ FRUSTUM_FAR ][ 3 ] = -lightProject[ 3 ][ 3 ] - 1.0f;
 
-#if 0
-				ri.Printf( PRINT_ALL, "light_target: (%5.3f, %5.3f, %5.3f)\n", light->l.projTarget[ 0 ], light->l.projTarget[ 1 ], light->l.projTarget[ 2 ] );
-				ri.Printf( PRINT_ALL, "light_right: (%5.3f, %5.3f, %5.3f)\n", light->l.projRight[ 0 ], light->l.projRight[ 1 ], light->l.projRight[ 2 ] );
-				ri.Printf( PRINT_ALL, "light_up: (%5.3f, %5.3f, %5.3f)\n", light->l.projUp[ 0 ], light->l.projUp[ 1 ], light->l.projUp[ 2 ] );
-				ri.Printf( PRINT_ALL, "light_start: (%5.3f, %5.3f, %5.3f)\n", light->l.projStart[ 0 ], light->l.projStart[ 1 ], light->l.projStart[ 2 ] );
-				ri.Printf( PRINT_ALL, "light_end: (%5.3f, %5.3f, %5.3f)\n", light->l.projEnd[ 0 ], light->l.projEnd[ 1 ], light->l.projEnd[ 2 ] );
-
-				ri.Printf( PRINT_ALL, "unnormalized frustum:\n" );
-
-				for ( i = 0; i < 6; i++ )
-				{
-					ri.Printf( PRINT_ALL, "(%5.6f, %5.6f, %5.6f, %5.6f)\n", frustum[ i ][ 0 ], frustum[ i ][ 1 ], frustum[ i ][ 2 ], frustum[ i ][ 3 ] );
-				}
-
-#endif
-
 				// calculate the new projection matrix from the frustum planes
 				MatrixFromPlanes( proj, frustum[ FRUSTUM_LEFT ], frustum[ FRUSTUM_RIGHT ], frustum[ FRUSTUM_BOTTOM ], frustum[ FRUSTUM_TOP ], frustum[ FRUSTUM_NEAR ], frustum[ FRUSTUM_FAR ] );
 
@@ -1065,15 +877,6 @@ void R_SetupLightProjection( trRefLight_t *light )
 					PlaneNormalize( frustum[ i ] );
 				}
 
-#if 0
-				ri.Printf( PRINT_ALL, "normalized frustum:\n" );
-
-				for ( i = 0; i < 6; i++ )
-				{
-					ri.Printf( PRINT_ALL, "(%5.3f, %5.3f, %5.3f, %5.3f)\n", light->frustum[ i ].normal[ 0 ], frustum[ i ][ 1 ], frustum[ i ][ 2 ], frustum[ i ][ 3 ] );
-				}
-
-#endif
 				break;
 			}
 
@@ -1155,15 +958,6 @@ qboolean R_AddLightInteraction( trRefLight_t *light, surfaceType_t *surface, sha
 	ia->scissorWidth = light->scissor.coords[ 2 ] - light->scissor.coords[ 0 ];
 	ia->scissorHeight = light->scissor.coords[ 3 ] - light->scissor.coords[ 1 ];
 
-	/*
-	if(r_shadows->integer == SHADOWING_STENCIL && glDepthBoundsEXT)
-	{
-	        ia->depthNear = light->depthNear;
-	        ia->depthFar = light->depthFar;
-	        ia->noDepthBoundsTest = light->noDepthBoundsTest;
-	}
-	*/
-
 	if ( glConfig2.occlusionQueryAvailable )
 	{
 		ia->noOcclusionQueries = light->noOcclusionQueries;
@@ -1189,8 +983,6 @@ compare function for qsort()
 */
 static int InteractionCompare( const void *a, const void *b )
 {
-#if 1
-
 	// shader first
 	if ( ( ( interaction_t * ) a )->shaderNum < ( ( interaction_t * ) b )->shaderNum )
 	{
@@ -1201,10 +993,6 @@ static int InteractionCompare( const void *a, const void *b )
 	{
 		return 1;
 	}
-
-#endif
-
-#if 1
 
 	// then entity
 	if ( ( ( interaction_t * ) a )->entity == &tr.worldEntity && ( ( interaction_t * ) b )->entity != &tr.worldEntity )
@@ -1226,8 +1014,6 @@ static int InteractionCompare( const void *a, const void *b )
 	{
 		return 1;
 	}
-
-#endif
 
 	return 0;
 }
@@ -1497,7 +1283,6 @@ void R_SetupLightScissor( trRefLight_t *light )
 				const vec4_t *frustum = (const vec4_t *)light->localFrustum;
 
 				R_CalcFrustumFarCorners( frustum, farCorners );
-#if 1
 
 				if ( !VectorCompare( light->l.projStart, vec3_origin ) )
 				{
@@ -1522,7 +1307,6 @@ void R_SetupLightScissor( trRefLight_t *light )
 					}
 				}
 				else
-#endif
 				{
 					vec3_t top;
 
@@ -1571,21 +1355,6 @@ byte R_CalcLightCubeSideBits( trRefLight_t *light, vec3_t worldBounds[ 2 ] )
 	int        r;
 	qboolean   anyClip;
 	qboolean   culled;
-
-#if 0
-	static int count = 0;
-	cubeSideBits = 0;
-
-	for ( cubeSide = 0; cubeSide < 6; cubeSide++ )
-	{
-		if ( count % 2 == 0 )
-		{
-			cubeSideBits |= ( 1 << cubeSide );
-		}
-	}
-
-	return cubeSideBits;
-#endif
 
 	if ( light->l.rlType != RL_OMNI || r_shadows->integer < SHADOWING_ESM16 || r_noShadowPyramids->integer )
 	{
@@ -1647,7 +1416,7 @@ byte R_CalcLightCubeSideBits( trRefLight_t *light, vec3_t worldBounds[ 2 ] )
 
 		// OpenGL projection matrix
 		fovX = 90;
-		fovY = 90; //R_CalcFov(fovX, shadowMapResolutions[light->shadowLOD], shadowMapResolutions[light->shadowLOD]);
+		fovY = 90;
 
 		zNear = 1.0;
 		zFar = light->sphereRadius;

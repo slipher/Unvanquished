@@ -1180,16 +1180,20 @@ void reset_moverspeed( gentity_t *self, float fallbackSpeed )
 
 	G_ResetFloatField(&self->speed, qtrue, self->config.speed, self->eclass->config.speed, fallbackSpeed);
 
-	// calculate time to reach second position from speed
-	VectorSubtract( self->activatedPosition, self->restingPosition, move );
-	distance = VectorLength( move );
-
-	VectorScale( move, self->speed, self->s.pos.trDelta );
-	self->s.pos.trDuration = distance * 1000 / self->speed;
-
-	if ( self->s.pos.trDuration <= 0 )
+	// reset duration only for linear movement else func_bobbing will not move
+	if ( self->s.pos.trType != TR_SINE )
 	{
-		self->s.pos.trDuration = 1;
+		// calculate time to reach second position from speed
+		VectorSubtract( self->activatedPosition, self->restingPosition, move );
+		distance = VectorLength( move );
+
+		VectorScale( move, self->speed, self->s.pos.trDelta );
+		self->s.pos.trDuration = distance * 1000 / self->speed;
+
+		if ( self->s.pos.trDuration <= 0 )
+		{
+			self->s.pos.trDuration = 1;
+		}
 	}
 }
 
@@ -1864,6 +1868,12 @@ void func_door_model_reset( gentity_t *self )
 	G_ResetIntField(&self->health, qtrue, self->config.health, self->eclass->config.health, 0);
 
 	self->takedamage = !!self->health;
+
+	self->s.torsoAnim = self->s.weapon * ( 1000.0f / self->speed ); //framerate
+	if ( self->s.torsoAnim <= 0 )
+	{
+		self->s.torsoAnim = 1;
+	}
 }
 
 void SP_func_door_model( gentity_t *self )
@@ -1967,7 +1977,7 @@ void SP_func_door_model( gentity_t *self )
 		self->s.weapon = 1;
 	}
 
-	self->s.torsoAnim = self->s.weapon * ( 1000.0f / self->config.speed ); //framerate
+	self->s.torsoAnim = 1; // stub value to avoid sigfpe
 
 	trap_LinkEntity( self );
 
@@ -2703,7 +2713,7 @@ void SP_func_pendulum( gentity_t *self )
 	self->s.apos.trDuration = 1000 / frequency;
 	self->s.apos.trTime = self->s.apos.trDuration * phase;
 	self->s.apos.trType = TR_SINE;
-	self->s.apos.trDelta[ 2 ] = self->config.speed;
+	self->s.apos.trDelta[ 2 ] = self->speed;
 }
 
 /*

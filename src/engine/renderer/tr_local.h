@@ -34,6 +34,24 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define BUFFER_OFFSET(i) ((char *)NULL + ( i ))
 
+// GL conversion helpers
+static inline float unorm8ToFloat(byte unorm8) {
+	return unorm8 * (1.0f / 255.0f);
+}
+static inline byte floatToUnorm8(float f) {
+	// don't use Q_ftol here, as the semantics of Q_ftol
+	// has been changed from round to nearest to round to 0 !
+	return lrintf(f * 255.0f);
+}
+static inline float snorm8ToFloat(byte snorm8) {
+	return MAX( (snorm8 - 128) * (1.0f / 127.0f), -1.0f);
+}
+static inline byte floatToSnorm8(float f) {
+	// don't use Q_ftol here, as the semantics of Q_ftol
+	// has been changed from round to nearest to round to 0 !
+	return lrintf(f * 127.0f) + 128;
+}
+
 // everything that is needed by the backend needs
 // to be double buffered to allow it to run in
 // parallel on a dual cpu machine
@@ -53,11 +71,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define MAX_VIEWS             10
 
 #define MAX_SHADOWMAPS        5
-
-//#define VOLUMETRIC_LIGHTING 1
-
-#define DEBUG_OPTIMIZEVERTICES     0
-#define CALC_REDUNDANT_SHADOWVERTS 0
 
 #define GLSL_COMPILE_STARTUP_ONLY  1
 
@@ -96,8 +109,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		GLDEBUG_OTHER,
 		GLDEBUG_ALL
 	} glDebugModes_t;
-
-#define HDR_ENABLED()         (( r_hdrRendering->integer && glConfig2.textureFloatAvailable && glConfig2.framebufferObjectAvailable && glConfig2.framebufferBlitAvailable && glConfig.driverType != GLDRV_MESA ))
 
 #define REF_CUBEMAP_SIZE       32
 #define REF_CUBEMAP_STORE_SIZE 1024
@@ -171,17 +182,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		l->prev = l->next = NULL;
 	}
 
-	/*
-	static INLINE void InsertLinkBefore(link_t *l, link_t *sentinel)
-	{
-	        l->next = sentinel;
-	        l->prev = sentinel->prev;
-
-	        l->prev->next = l;
-	        l->next->prev = l;
-	}
-	*/
-
 	static INLINE void InsertLink( link_t *l, link_t *sentinel )
 	{
 		l->next = sentinel->next;
@@ -224,15 +224,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 		top = l->next;
 
-#if 1
 		RemoveLink( top );
-#else
-		top->next->prev = top->prev;
-		top->prev->next = top->next;
-
-		top->prev = top->next = NULL;
-#endif
-
 		data = top->data;
 		Com_Dealloc( top );
 
@@ -268,20 +260,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		sentinel->numElements++;
 	}
 
-	/*
-	static INLINE void EnQueue2(link_t *sentinel, void *data, void *(*mallocFunc)(size_t __size))
-	{
-	        link_t *l;
-
-	        l = mallocFunc(sizeof(*l));
-	        InitLink(l, data);
-
-	        InsertLink(l, sentinel);
-
-	        sentinel->numElements++;
-	}
-	*/
-
 	static INLINE void *DeQueue( link_t *l )
 	{
 		link_t *tail;
@@ -289,15 +267,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 		tail = l->prev;
 
-#if 1
 		RemoveLink( tail );
-#else
-		tail->next->prev = tail->prev;
-		tail->prev->next = tail->next;
-
-		tail->prev = tail->next = NULL;
-#endif
-
 		data = tail->data;
 		Com_Dealloc( tail );
 
@@ -387,8 +357,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		link_t                    leafs;
 
 		int                       visCounts[ MAX_VISCOUNTS ]; // node needs to be traversed if current
-		//struct bspNode_s **leafs;
-		//int             numLeafs;
 	} trRefLight_t;
 
 // a trRefEntity_t has all the information passed in by
@@ -687,8 +655,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		uint32_t indexesVBO;
 		uint32_t indexesSize; // amount of memory data allocated for all triangles in bytes
 		uint32_t indexesNum;
-
-//  uint32_t        ofsIndexes;
 	} IBO_t;
 
 //===============================================================================
@@ -1036,11 +1002,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 	  ST_PORTALMAP,
 	  ST_HEATHAZEMAP, // heatHaze post process effect
 	  ST_LIQUIDMAP,
-
-#if defined( COMPAT_Q3A ) || defined( COMPAT_ET )
 	  ST_LIGHTMAP,
-#endif
-
 	  ST_COLLAPSE_lighting_DB, // diffusemap + bumpmap
 	  ST_COLLAPSE_lighting_DBG, // diffusemap + bumpmap + glowmap
 	  ST_COLLAPSE_lighting_DBS, // diffusemap + bumpmap + specularmap
@@ -1447,9 +1409,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		int                     pixelTargetWidth;
 		int                     pixelTargetHeight;
 
-#if defined( COMPAT_ET )
 		glfog_t glFog; // (SA) added (needed to pass fog infos into the portal sky scene)
-#endif
 
 		int                    numVisTests;
 		struct visTestResult_s *visTests;
@@ -1748,14 +1708,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		vec3_t binormal;
 		vec3_t normal;
 		vec4_t lightColor;
-
-#if !defined( COMPAT_Q3A ) && !defined( COMPAT_ET )
-		vec3_t lightDirection;
-#endif
-
-#if DEBUG_OPTIMIZEVERTICES
-		unsigned int id;
-#endif
 	} srfVert_t;
 
 	typedef struct
@@ -1773,9 +1725,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		vec3_t   bounds[ 2 ];
 		vec3_t   origin;
 		float    radius;
-
-		// dynamic lighting information
-//	int             dlightBits[SMP_FRAMES];
 	}
 
 	srfGeneric_t;
@@ -1984,24 +1933,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		bspSurface_t **viewSurfaces;
 	} bspNode_t;
 
-	/*
-	typedef struct
-	{
-	        int             numMarkSurfaces;
-	        bspSurface_t  **markSurfaces;
-
-	        int             numVBOSurfaces;
-	        srfVBOMesh_t  **vboSurfaces;
-	} bspArea_t;
-
-	typedef struct
-	{
-	        int             areas[2];
-
-	        vec3_t          points[4];
-	} bspAreaPortal_t;
-	*/
-
 	typedef struct
 	{
 		vec3_t       bounds[ 2 ]; // for culling
@@ -2013,25 +1944,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		decal_t *decals;
 	} bspModel_t;
 
-	// The lightVec is not just a direction vector, it is
-	// the product of the normalized light direction vector
-	// multiplied by the ratio of directed light in the total
-	// luminance.
-	// The reason for storing total luminance and lightVec instead
-	// of separate ambient and directional light, is that this
-	// way the interpolation of two light gridPoints with nearly
-	// opposite light directions will result in a stronger ambient
-	// light in the middle, whereas the other method will produce
-	// directional light from a random direction.
+	// The light direction vector is stored as the x/y coordinates
+	// of the vector projected on an unit octahedron. To disambiguate
+	// the upper and lower half of the octahedron, the four lower
+	// triangles of the octahedron are flipped into the outer corners
+	// of the unit square.
 	typedef struct bspGridPoint1_s
 	{
-		byte  lightVec[3];
-		byte  luminance;
+		byte  ambient[3];
+		byte  lightVecX;
 	} bspGridPoint1_t;
 	typedef struct bspGridPoint2_s
 	{
-		byte  ambientChroma[2];
-		byte  directedChroma[2];
+		byte  directed[3];
+		byte  lightVecY;
 	} bspGridPoint2_t;
 
 // ydnar: optimization
@@ -2062,23 +1988,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 		int           numVerts;
 		srfVert_t     *verts;
-#if CALC_REDUNDANT_SHADOWVERTS
-		int           redundantVertsCalculationNeeded;
-		int           *redundantLightVerts; // util to optimize IBOs
-		int           *redundantShadowVerts;
-		int           *redundantShadowAlphaTestVerts;
-#endif
+
 		VBO_t         *vbo;
 		IBO_t         *ibo;
 
 		int           numTriangles;
 		srfTriangle_t *triangles;
-
-//  int             numAreas;
-//  bspArea_t      *areas;
-
-//  int             numAreaPortals;
-//  bspAreaPortal_t *areaPortals;
 
 		int                numSurfaces;
 		bspSurface_t       *surfaces;
@@ -2229,19 +2144,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		float       boneWeights[ MAX_WEIGHTS ];
 	} ) md5Vertex_t;
 
-	/*
-	typedef struct
-	{
-	        int             indexes[3];
-	        int             neighbors[3];
-	} md5Triangle_t;
-	*/
-
 	typedef struct
 	{
 		surfaceType_t surfaceType;
 
-//  char            name[MAX_QPATH];    // polyset name
 		char              shader[ MAX_QPATH ];
 		int               shaderIndex; // for in-game use
 
@@ -2284,7 +2190,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 	  AT_BAD,
 	  AT_MD5,
 	  AT_IQM,
-	  AT_PSA
 	} animType_t;
 
 	enum
@@ -2398,17 +2303,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 	typedef struct
 	{
-		axAnimationInfo_t info;
-
-		int               numBones;
-		axReferenceBone_t *bones;
-
-		int               numKeys;
-		axAnimationKey_t  *keys;
-	} psaAnimation_t;
-
-	typedef struct
-	{
 		char           name[ MAX_QPATH ]; // game path, including extension
 		animType_t     type;
 		int            index; // anim = tr.animations[anim->index]
@@ -2416,7 +2310,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		union {
 			md5Animation_t *md5;
 			IQAnim_t       *iqm;
-			psaAnimation_t *psa;
 		};
 	} skelAnimation_t;
 
@@ -2551,11 +2444,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 		int    currenttextures[ 32 ];
 		int    currenttmu;
-//  matrix_t        textureMatrix[32];
 
 		int stackIndex;
-//  matrix_t        modelMatrix[MAX_GLSTACK];
-//  matrix_t        viewMatrix[MAX_GLSTACK];
 		matrix_t        modelViewMatrix[ MAX_GLSTACK ];
 		matrix_t        projectionMatrix[ MAX_GLSTACK ];
 		matrix_t        modelViewProjectionMatrix[ MAX_GLSTACK ];
@@ -2639,11 +2529,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		trRefEntity_t     *currentEntity;
 		trRefLight_t      *currentLight; // only used when lighting interactions
 		qboolean          skyRenderedThisView; // flag for drawing sun
-
-		float             hdrAverageLuminance;
-		float             hdrMaxLuminance;
-		float             hdrTime;
-		float             hdrKey;
 
 		qboolean          projection2D; // if qtrue, drawstretchpic doesn't need to change modes
 		vec4_t            color2D;
@@ -2751,15 +2636,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		image_t    *depthRenderImage;
 		image_t    *portalRenderImage;
 
-		image_t    *deferredRenderFBOImage;
 		image_t    *occlusionRenderFBOImage;
 		image_t    *depthToColorBackFacesFBOImage;
 		image_t    *depthToColorFrontFacesFBOImage;
 		image_t    *downScaleFBOImage_quarter;
 		image_t    *downScaleFBOImage_64x64;
-//	image_t        *downScaleFBOImage_16x16;
-//	image_t        *downScaleFBOImage_4x4;
-//	image_t        *downScaleFBOImage_1x1;
 		image_t *shadowMapFBOImage[ MAX_SHADOWMAPS * 2 ];
 		image_t *shadowCubeFBOImage[ MAX_SHADOWMAPS ];
 		image_t *sunShadowMapFBOImage[ MAX_SHADOWMAPS * 2 ];
@@ -2769,20 +2650,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 		// external images
 		image_t *charsetImage;
-		image_t *grainImage;
-		image_t *vignetteImage;
 		image_t *colorGradeImage;
 		GLuint   colorGradePBO;
 
 		// framebuffer objects
-		FBO_t *deferredRenderFBO; // is used by HDR rendering
 		FBO_t *portalRenderFBO; // holds a copy of the last currentRender that was rendered into a FBO
 		FBO_t *occlusionRenderFBO; // used for overlapping visibility determination
 		FBO_t *downScaleFBO_quarter;
 		FBO_t *downScaleFBO_64x64;
-//	FBO_t          *downScaleFBO_16x16;
-//	FBO_t          *downScaleFBO_4x4;
-//	FBO_t          *downScaleFBO_1x1;
 		FBO_t *contrastRenderFBO;
 		FBO_t *bloomRenderFBO[ 2 ];
 		FBO_t *shadowMapFBO[ MAX_SHADOWMAPS ];
@@ -2821,17 +2696,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		// render lights
 		trRefLight_t *currentLight;
 
-		//
-		// GPU shader programs
-		//
-
-#if !defined( GLSL_COMPILE_STARTUP_ONLY )
-
-		// post process effects
-		shaderProgram_t rotoscopeShader;
-
-#endif // GLSL_COMPILE_STARTUP_ONLY
-
 		// -----------------------------------------
 
 		viewParms_t    viewParms;
@@ -2855,10 +2719,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		vec3_t fogColor;
 		float  fogDensity;
 
-#if defined( COMPAT_ET )
 		glfog_t     glfogsettings[ NUM_FOGS ];
 		glfogType_t glfogNum;
-#endif
 
 		frontEndCounters_t pc;
 		int                frontEndMsec; // not in pc due to clearing issue
@@ -2917,9 +2779,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		scissorState_t scissor;
 	} trGlobals_t;
 
-//	typedef struct {
-//	} glBroken_t;
-
 	extern const matrix_t quakeToOpenGLMatrix;
 	extern const matrix_t openGLToQuakeMatrix;
 	extern const matrix_t flipZMatrix;
@@ -2931,8 +2790,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 	extern trGlobals_t    tr;
 	extern glconfig_t     glConfig; // outside of TR since it shouldn't be cleared during ref re-init
 	extern glconfig2_t    glConfig2;
-
-//	extern glBroken_t     glBroken;
 
 	extern glstate_t      glState; // outside of TR since it shouldn't be cleared during ref re-init
 
@@ -3157,10 +3014,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 	extern cvar_t *r_vboShadows;
 	extern cvar_t *r_vboLighting;
 	extern cvar_t *r_vboModels;
-	extern cvar_t *r_vboOptimizeVertices;
 	extern cvar_t *r_vboVertexSkinning;
 	extern cvar_t *r_vboDeformVertexes;
-	extern cvar_t *r_vboSmoothNormals;
 
 	extern cvar_t *r_mergeLeafSurfaces;
 
@@ -3175,38 +3030,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 	extern cvar_t *r_chcVisibilityThreshold;
 	extern cvar_t *r_chcIgnoreLeaves;
 
-	extern cvar_t *r_hdrRendering;
-	extern cvar_t *r_hdrMinLuminance;
-	extern cvar_t *r_hdrMaxLuminance;
-	extern cvar_t *r_hdrKey;
-	extern cvar_t *r_hdrContrastThreshold;
-	extern cvar_t *r_hdrContrastOffset;
-	extern cvar_t *r_hdrLightmap;
-	extern cvar_t *r_hdrLightmapExposure;
-	extern cvar_t *r_hdrLightmapGamma;
-	extern cvar_t *r_hdrLightmapCompensate;
-	extern cvar_t *r_hdrToneMappingOperator;
-	extern cvar_t *r_hdrGamma;
-	extern cvar_t *r_hdrDebug;
-
-#ifdef EXPERIMENTAL
-	extern cvar_t *r_screenSpaceAmbientOcclusion;
-#endif
-#ifdef EXPERIMENTAL
-	extern cvar_t *r_depthOfField;
-#endif
-
 	extern cvar_t *r_reflectionMapping;
 	extern cvar_t *r_highQualityNormalMapping;
 
 	extern cvar_t *r_bloom;
 	extern cvar_t *r_bloomBlur;
 	extern cvar_t *r_bloomPasses;
-	extern cvar_t *r_rotoscope;
 	extern cvar_t *r_FXAA;
-	extern cvar_t *r_cameraVignette;
-	extern cvar_t *r_cameraFilmGrain;
-	extern cvar_t *r_cameraFilmGrainScale;
 
 	extern cvar_t *r_evsmPostProcess;
 
@@ -3262,12 +3092,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 	void           R_CalcTangentsForTriangle( vec3_t tangent, vec3_t binormal,
 	    const vec3_t v0, const vec3_t v1, const vec3_t v2,
 	    const vec2_t t0, const vec2_t t1, const vec2_t t2 );
-
-#if 0
-	void R_CalcTangentsForTriangle2( vec3_t tangent, vec3_t binormal,
-	                                 const vec3_t v0, const vec3_t v1, const vec3_t v2,
-	                                 const vec2_t t0, const vec2_t t1, const vec2_t t2 );
-#endif
 
 	void R_CalcTangentSpace( vec3_t tangent, vec3_t binormal, vec3_t normal,
 	                         const vec3_t v0, const vec3_t v1, const vec3_t v2,
@@ -3613,8 +3437,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 	void R_ClearFlares( void );
 
 	void RB_AddFlare( void *surface, int fogNum, vec3_t point, vec3_t color, vec3_t normal );
-	void RB_AddLightFlares( void );
-	void RB_RenderFlares( void );
 
 	/*
 	============================================================
@@ -3626,6 +3448,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 	void     R_AddBrushModelInteractions( trRefEntity_t *ent, trRefLight_t *light, interactionType_t iaType );
 	void     R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent, vec3_t forcedOrigin );
+	float R_InterpolateLightGrid( world_t *w, int from[3], int to[3],
+				      float *factors[3], vec3_t ambientLight,
+				      vec3_t directedLight, vec2_t lightDir );
 	int      R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );
 	void     R_TessLight( const trRefLight_t *light, const vec4_t color );
 
@@ -3664,15 +3489,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 	============================================================
 	*/
 
-#if defined( COMPAT_ET )
 	void R_SetFrameFog( void );
 	void RB_Fog( glfog_t *curfog );
 	void RB_FogOff( void );
 	void RB_FogOn( void );
 	void RE_SetFog( int fogvar, int var1, int var2, float r, float g, float b, float density );
 	void RE_SetGlobalFog( qboolean restore, int duration, float r, float g, float b, float depthForOpaque );
-
-#endif
 
 	/*
 	============================================================
@@ -3693,7 +3515,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 	*/
 
 	void R_InitSkyTexCoords( float cloudLayerHeight );
-	void RB_DrawSun( void );
 
 	/*
 	============================================================
@@ -3861,18 +3682,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 	ANIMATED MODELS WOLFENSTEIN
 
-	=============================================================
-	*/
-
-	/*
-	void            R_AddAnimSurfaces(trRefEntity_t * ent);
-	void            RB_SurfaceAnim(mdsSurface_t * surfType);
-	int             R_GetBoneTag(orientation_t * outTag, mdsHeader_t * mds, int startTagIndex, const refEntity_t * refent,
-	                                                         const char *tagName);
-	                                                         */
-
-	/*
-	=============================================================
 	=============================================================
 	*/
 
@@ -4160,7 +3969,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // font stuff
 	void       R_InitFreeType( void );
 	void       R_DoneFreeType( void );
-	void       RE_RegisterFont( const char *fontName, const char *fallbackName, int pointSize, fontInfo_t *font );
+	void       RE_RegisterFont( const char *fontName, const char *fallbackName, int pointSize, fontInfo_t **font );
 	void       RE_UnregisterFont( fontInfo_t *font );
 	void       RE_Glyph(fontInfo_t *font, const char *str, glyphInfo_t *glyph);
 	void       RE_GlyphChar(fontInfo_t *font, int ch, glyphInfo_t *glyph);

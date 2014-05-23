@@ -86,12 +86,6 @@ static void GiveFullClip( gentity_t *self )
 	wa = BG_Weapon( ps->stats[ STAT_WEAPON ] );
 
 	ps->ammo = wa->maxAmmo;
-
-	// apply battery pack modifier
-	if ( wa->usesEnergy && BG_InventoryContainsUpgrade( UP_BATTPACK, ps->stats ) )
-	{
-		ps->ammo *= BATTPACK_MODIFIER;
-	}
 }
 
 /**
@@ -110,7 +104,6 @@ static qboolean CanUseAmmoRefill( gentity_t *self )
 {
 	const weaponAttributes_t *wa;
 	playerState_t *ps;
-	int           maxAmmo;
 
 	if ( !self || !self->client )
 	{
@@ -127,16 +120,8 @@ static qboolean CanUseAmmoRefill( gentity_t *self )
 
 	if ( wa->maxClips == 0 )
 	{
-		maxAmmo = wa->maxAmmo;
-
-		// apply battery pack modifier
-		if ( wa->usesEnergy && BG_InventoryContainsUpgrade( UP_BATTPACK, ps->stats ) )
-		{
-			maxAmmo *= BATTPACK_MODIFIER;
-		}
-
 		// clipless weapons can be refilled whenever they lack ammo
-		return ( ps->ammo != maxAmmo );
+		return ( ps->ammo != wa->maxAmmo );
 	}
 	else if ( ps->clips != wa->maxClips )
 	{
@@ -326,14 +311,11 @@ Trace a bounding box against entities, but not the world
 Also check there is a line of sight between the start and end point
 ================
 */
-static void G_WideTrace( trace_t *tr, gentity_t *ent, float range,
-                         float width, float height, gentity_t **target )
+static void G_WideTrace( trace_t *tr, gentity_t *ent, const float range,
+                         const float width, const float height, gentity_t **target )
 {
-	vec3_t mins, maxs;
-	vec3_t end;
-
-	VectorSet( mins, -width, -width, -height );
-	VectorSet( maxs, width, width, height );
+	vec3_t mins, maxs, end;
+	float  halfDiagonal;
 
 	*target = NULL;
 
@@ -342,11 +324,15 @@ static void G_WideTrace( trace_t *tr, gentity_t *ent, float range,
 		return;
 	}
 
-	G_UnlaggedOn( ent, muzzle, range + width );
+	// Calculate box to use for trace
+	VectorSet( maxs, width, width, height );
+	VectorNegate( maxs, mins );
+	halfDiagonal = VectorLength( maxs );
 
+	G_UnlaggedOn( ent, muzzle, range + halfDiagonal );
+
+	// Trace box against entities
 	VectorMA( muzzle, range, forward, end );
-
-	// Trace against entities
 	trap_Trace( tr, muzzle, mins, maxs, end, ent->s.number, CONTENTS_BODY );
 
 	if ( tr->entityNum != ENTITYNUM_NONE )
@@ -354,14 +340,14 @@ static void G_WideTrace( trace_t *tr, gentity_t *ent, float range,
 		*target = &g_entities[ tr->entityNum ];
 	}
 
-	// Set range to the trace length plus the width, so that the end of the
-	// LOS trace is close to the exterior of the target's bounding box
-	range = Distance( muzzle, tr->endpos ) + width;
-	VectorMA( muzzle, range, forward, end );
-
-	// Trace for line of sight against the world
+	// Line trace against the world, so we never hit through obstacles.
+	// The range is reduced according to the former trace so we don't hit something behind the
+	// current target.
+	VectorMA( muzzle, Distance( muzzle, tr->endpos ) + halfDiagonal, forward, end );
 	trap_Trace( tr, muzzle, NULL, NULL, end, ent->s.number, CONTENTS_SOLID );
 
+	// In case we hit a different target, which can happen if two potential targets are close,
+	// switch to it, so we will end up with the target we were looking at.
 	if ( tr->entityNum != ENTITYNUM_NONE )
 	{
 		*target = &g_entities[ tr->entityNum ];
@@ -1189,7 +1175,14 @@ static void CancelBuild( gentity_t *self )
 
 static void FireBuild( gentity_t *self, dynMenu_t menu )
 {
-	buildable_t buildable = (buildable_t) ( self->client->ps.stats[ STAT_BUILDABLE ] & SB_BUILDABLE_MASK );
+	buildable_t buildable;
+
+	if ( !self->client )
+	{
+		return;
+	}
+
+	buildable = (buildable_t) ( self->client->ps.stats[ STAT_BUILDABLE ] & SB_BUILDABLE_MASK );
 
 	// open build menu
 	if ( buildable <= BA_NONE )
@@ -1632,7 +1625,7 @@ void G_ChargeAttack( gentity_t *self, gentity_t *victim )
 	int    i;
 	vec3_t forward;
 
-	if ( self->client->ps.stats[ STAT_MISC ] <= 0 ||
+	if ( !self->client || self->client->ps.stats[ STAT_MISC ] <= 0 ||
 	     !( self->client->ps.stats[ STAT_STATE ] & SS_CHARGING ) ||
 	     self->client->ps.weaponTime )
 	{

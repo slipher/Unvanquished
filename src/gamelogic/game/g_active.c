@@ -350,7 +350,7 @@ void ClientImpacts( gentity_t *ent, pmove_t *pm )
 	trace_t   trace;
 	gentity_t *other;
 
-	if( !ent->client )
+	if( !ent || !ent->client )
 	{
 		return;
 	}
@@ -376,7 +376,7 @@ void ClientImpacts( gentity_t *ent, pmove_t *pm )
 		G_WeightAttack( ent, other );
 
 		// tyrant trample
-		if ( ent->client && ent->client->ps.weapon == WP_ALEVEL4 )
+		if ( ent->client->ps.weapon == WP_ALEVEL4 )
 		{
 			G_ChargeAttack( ent, other );
 		}
@@ -387,13 +387,14 @@ void ClientImpacts( gentity_t *ent, pmove_t *pm )
 			ClientShove( ent, other );
 
 			//bot should get pushed out the way
-			if((ent->client) && (other->r.svFlags & SVF_BOT) && ent->client->pers.team == other->client->pers.team)
+			if( (other->r.svFlags & SVF_BOT) && ent->client->pers.team == other->client->pers.team)
 			{
 				PushBot(ent, other);
 			}
 
 			// if we are standing on their head, then we should be pushed also
-			if((ent->r.svFlags & SVF_BOT) && ent->s.groundEntityNum == other->s.number && other->client && ent->client->pers.team == other->client->pers.team)
+			if( (ent->r.svFlags & SVF_BOT) && ent->s.groundEntityNum == other->s.number &&
+			    other->client && ent->client->pers.team == other->client->pers.team)
 			{
 				PushBot(other, ent);
 			}
@@ -514,7 +515,7 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd )
 	pmove_t   pm;
 	gclient_t *client;
 	int       clientNum;
-	qboolean  attack1, attack3, following, queued;
+	qboolean  attack1, following, queued;
 	team_t    team;
 
 	client = ent->client;
@@ -524,8 +525,6 @@ void SpectatorThink( gentity_t *ent, usercmd_t *ucmd )
 
 	attack1 = usercmdButtonPressed( client->buttons, BUTTON_ATTACK ) &&
 	          !usercmdButtonPressed( client->oldbuttons, BUTTON_ATTACK );
-	attack3 = usercmdButtonPressed( client->buttons, BUTTON_USE_HOLDABLE ) &&
-	          !usercmdButtonPressed( client->oldbuttons, BUTTON_USE_HOLDABLE );
 
 	//if bot
 	if( ent->r.svFlags & SVF_BOT ) {
@@ -745,7 +744,7 @@ static void G_ReplenishHumanHealth( gentity_t *self )
 	}
 
 	// check if medikit is active
-	if ( !( client->ps.stats[ STAT_STATE ] & SS_HEALING_2X ) )
+	if ( !( client->ps.stats[ STAT_STATE ] & SS_HEALING_4X ) )
 	{
 		return;
 	}
@@ -754,7 +753,7 @@ static void G_ReplenishHumanHealth( gentity_t *self )
 	if ( self->health >= client->ps.stats[ STAT_MAX_HEALTH ] )
 	{
 		client->medKitHealthToRestore = 0;
-		client->ps.stats[ STAT_STATE ] &= ~SS_HEALING_2X;
+		client->ps.stats[ STAT_STATE ] &= ~SS_HEALING_4X;
 
 		return;
 	}
@@ -763,7 +762,7 @@ static void G_ReplenishHumanHealth( gentity_t *self )
 	if ( client->medKitHealthToRestore <= 0 || client->ps.pm_type == PM_DEAD )
 	{
 		client->medKitHealthToRestore = 0;
-		client->ps.stats[ STAT_STATE ] &= ~SS_HEALING_2X;
+		client->ps.stats[ STAT_STATE ] &= ~SS_HEALING_4X;
 
 		return;
 	}
@@ -798,8 +797,7 @@ void ClientTimerActions( gentity_t *ent, int msec )
 {
 	playerState_t *ps;
 	gclient_t     *client;
-	usercmd_t     *ucmd;
-	int           i, aForward, aRight;
+	int           i;
 	buildable_t   buildable;
 
 	if ( !ent || !ent->client )
@@ -809,10 +807,6 @@ void ClientTimerActions( gentity_t *ent, int msec )
 
 	client = ent->client;
 	ps     = &client->ps;
-	ucmd   = &client->pers.cmd;
-
-	aForward = abs( ucmd->forwardmove );
-	aRight   = abs( ucmd->rightmove );
 
 	client->time100 += msec;
 	client->time1000 += msec;
@@ -1529,15 +1523,13 @@ static void G_UnlaggedDetectCollisions( gentity_t *ent )
 
 /**
  * @brief Attempt to find a health source for an alien.
- * @return A mask of SS_HEALING_* flags:
- *         SS_HEALING_ACTIVE when there is any heath source,
- *         SS_HEALING_2X     when there also is a source for double healing,
- *         SS_HEALING_3X     when there also is a source for triple healing.
+ * @return A mask of SS_HEALING_* flags.
  */
 static int FindAlienHealthSource( gentity_t *self )
 {
 	int       ret = 0;
-	float     distance;
+	float     distance, minBoosterDistance = FLT_MAX;
+	qboolean  needsHealing;
 	gentity_t *ent;
 
 	if ( !self || !self->client )
@@ -1545,54 +1537,73 @@ static int FindAlienHealthSource( gentity_t *self )
 		return 0;
 	}
 
+	needsHealing = self->client->ps.stats[ STAT_HEALTH ] <
+	               BG_Class( self->client->ps.stats[ STAT_CLASS ] )->health;
+
+	self->boosterUsed = NULL;
+
 	for ( ent = NULL; ( ent = G_IterateEntities( ent, NULL, qtrue, 0, NULL ) ); )
 	{
+		if ( !G_OnSameTeam( self, ent ) ) continue;
+		if ( ent->health <= 0 )           continue;
+
 		distance = Distance( ent->s.origin, self->s.origin );
 
-		if ( ent->client && ent->health > 0 && distance < REGEN_BOOST_RANGE &&
-		     ent->client->pers.team == self->client->pers.team )
+		if ( ent->client && self != ent && distance < REGEN_BOOST_RANGE )
 		{
-			/*if ( ent->client->ps.stats[ STAT_CLASS ] == PCL_ALIEN_LEVEL4 )
+			switch ( ent->client->ps.stats[ STAT_CLASS ] )
 			{
-				// Tyrant healing aura
-				ret |= SS_HEALING_2X;
-			}*/
-		}
-		else if ( ent->s.eType == ET_BUILDABLE && ent->spawned && ent->health > 0 &&
-		          ent->buildableTeam == self->client->pers.team )
-		{
-			if ( ( ent->s.modelindex == BA_A_SPAWN || ent->s.modelindex == BA_A_OVERMIND ) &&
-			     distance < ( float )CREEP_BASESIZE )
-			{
-				// "Creep healing" (close to spawn or OM)
-				ret |= SS_HEALING_ACTIVE;
+				// Group healing
+				default:
+					ret |= SS_HEALING_2X;
+					break;
 			}
-			else if ( ent->s.modelindex == BA_A_BOOSTER && distance < REGEN_BOOST_RANGE )
+		}
+		else if ( ent->s.eType == ET_BUILDABLE && ent->spawned && ent->powered )
+		{
+			if ( ent->s.modelindex == BA_A_BOOSTER && ent->powered && distance < REGEN_BOOST_RANGE )
 			{
 				// Booster healing
-				ret |= SS_HEALING_3X;
+				ret |= SS_HEALING_8X;
+
+				// The closest booster used will play an effect
+				if ( needsHealing && distance < minBoosterDistance )
+				{
+					minBoosterDistance = distance;
+					self->boosterUsed  = ent;
+				}
+			}
+			else if ( distance < BG_Buildable( ent->s.modelindex )->creepSize )
+			{
+				// Creep healing
+				ret |= SS_HEALING_4X;
+			}
+			else if ( ( ent->s.modelindex == BA_A_OVERMIND || ent->s.modelindex == BA_A_SPAWN ) &&
+			          distance < CREEP_BASESIZE )
+			{
+				// Base healing
+				ret |= SS_HEALING_2X;
 			}
 		}
 	}
 
-	if ( ret & SS_HEALING_3X )
-	{
-		ret |= SS_HEALING_2X;
-	}
-
-	if ( ret & SS_HEALING_2X )
-	{
-		ret |= SS_HEALING_ACTIVE;
-	}
+	if ( ret & SS_HEALING_8X ) ret |= SS_HEALING_4X;
+	if ( ret & SS_HEALING_4X ) ret |= SS_HEALING_2X;
 
 	if ( ret )
 	{
 		self->healthSourceTime = level.time;
+
+		if ( self->boosterUsed )
+		{
+			self->boosterTime = level.time;
+		}
 	}
 
 	return ret;
 }
 
+// TODO: Synchronize
 static void G_ReplenishAlienHealth( gentity_t *self )
 {
 	gclient_t *client;
@@ -1611,41 +1622,42 @@ static void G_ReplenishAlienHealth( gentity_t *self )
 
 	regenBaseRate = BG_Class( client->ps.stats[ STAT_CLASS ] )->regenRate;
 
-	if ( regenBaseRate == 0 )
+	if ( regenBaseRate <= 0 )
 	{
 		return;
 	}
 
-	wasHealing = client->ps.stats[ STAT_STATE ] & SS_HEALING_ACTIVE;
+	wasHealing = client->ps.stats[ STAT_STATE ] & SS_HEALING_2X;
 
 	// Check for health sources
-	client->ps.stats[ STAT_STATE ] &= ~( SS_HEALING_ACTIVE | SS_HEALING_2X | SS_HEALING_3X );
+	client->ps.stats[ STAT_STATE ] &= ~( SS_HEALING_2X | SS_HEALING_4X | SS_HEALING_8X );
 	client->ps.stats[ STAT_STATE ] |= FindAlienHealthSource( self );
 
 	if ( self->nextRegenTime < level.time )
 	{
-		if      ( client->ps.stats[ STAT_STATE ] & SS_HEALING_3X )
+		if      ( client->ps.stats[ STAT_STATE ] & SS_HEALING_8X )
 		{
-			modifier = 3.0f;
+			modifier = 8.0f;
+		}
+		else if ( client->ps.stats[ STAT_STATE ] & SS_HEALING_4X )
+		{
+			modifier = 4.0f;
 		}
 		else if ( client->ps.stats[ STAT_STATE ] & SS_HEALING_2X )
 		{
 			modifier = 2.0f;
 		}
-		else if ( client->ps.stats[ STAT_STATE ] & SS_HEALING_ACTIVE )
-		{
-			modifier = 1.0f;
-		}
 		else
 		{
 			if ( g_alienOffCreepRegenHalfLife.value < 1 )
 			{
-				modifier = ALIEN_REGEN_NOCREEP_MOD;
+				modifier = 1.0f;
 			}
 			else
 			{
 				// Exponentially decrease healing rate when not on creep. ln(2) ~= 0.6931472
-				modifier = exp( ( 0.6931472f / ( 1000.0f * g_alienOffCreepRegenHalfLife.value ) ) * ( self->healthSourceTime - level.time ) );
+				modifier = exp( ( 0.6931472f / ( 1000.0f * g_alienOffCreepRegenHalfLife.value ) ) *
+				                ( self->healthSourceTime - level.time ) );
 				modifier = MAX( modifier, ALIEN_REGEN_NOCREEP_MIN );
 			}
 		}
@@ -1659,7 +1671,7 @@ static void G_ReplenishAlienHealth( gentity_t *self )
 
 		self->nextRegenTime = level.time + count * interval;
 	}
-	else if ( !wasHealing && client->ps.stats[ STAT_STATE ] & SS_HEALING_ACTIVE )
+	else if ( !wasHealing && client->ps.stats[ STAT_STATE ] & SS_HEALING_2X )
 	{
 		// Don't immediately start regeneration to prevent players from quickly
 		// hopping in and out of a creep area to increase their heal rate
@@ -1810,11 +1822,11 @@ void ClientThink_real( gentity_t *self )
 	}
 
 	// Is power/creep available for the client's team?
-	if ( client->pers.team == TEAM_HUMANS && G_Reactor() )
+	if ( client->pers.team == TEAM_HUMANS && G_ActiveReactor() )
 	{
 		client->ps.eFlags |= EF_POWER_AVAILABLE;
 	}
-	else if ( client->pers.team == TEAM_ALIENS && G_Overmind() )
+	else if ( client->pers.team == TEAM_ALIENS && G_ActiveOvermind() )
 	{
 		client->ps.eFlags |= EF_POWER_AVAILABLE;
 	}
@@ -1856,7 +1868,7 @@ void ClientThink_real( gentity_t *self )
 	     BG_UpgradeIsActive( UP_MEDKIT, client->ps.stats ) )
 	{
 		//if currently using a medkit or have no need for a medkit now
-		if ( (client->ps.stats[ STAT_STATE ] & SS_HEALING_2X) ||
+		if ( (client->ps.stats[ STAT_STATE ] & SS_HEALING_4X) ||
 		     ( client->ps.stats[ STAT_HEALTH ] == client->ps.stats[ STAT_MAX_HEALTH ] &&
 		       !( client->ps.stats[ STAT_STATE ] & SS_POISONED ) ) )
 		{
@@ -1871,7 +1883,7 @@ void ClientThink_real( gentity_t *self )
 			client->ps.stats[ STAT_STATE ] &= ~SS_POISONED;
 			client->poisonImmunityTime = level.time + MEDKIT_POISON_IMMUNITY_TIME;
 
-			client->ps.stats[ STAT_STATE ] |= SS_HEALING_2X;
+			client->ps.stats[ STAT_STATE ] |= SS_HEALING_4X;
 			client->lastMedKitTime = level.time;
 			client->medKitHealthToRestore =
 			  client->ps.stats[ STAT_MAX_HEALTH ] - client->ps.stats[ STAT_HEALTH ];
@@ -2247,15 +2259,11 @@ while a slow client may have multiple ClientEndFrame between ClientThink.
 */
 void ClientEndFrame( gentity_t *ent )
 {
-	clientPersistant_t *pers;
-
 	if ( ent->client->sess.spectatorState != SPECTATOR_NOT )
 	{
 		SpectatorClientEndFrame( ent );
 		return;
 	}
-
-	pers = &ent->client->pers;
 
 	//
 	// If the end of unit layout is displayed, don't give
