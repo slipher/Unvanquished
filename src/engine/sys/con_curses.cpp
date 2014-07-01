@@ -136,7 +136,7 @@ static void CON_SetColor( WINDOW *win, int color )
 	}
 	else if ( COLORS >= 256 && com_ansiColor->integer > 0 )
 	{
-		wattrset( win, COLOR_PAIR( color + 9 ) ); // hardwired below; see init_pair() calls
+		wattrset(win, COLOR_PAIR(color + 1)); // hard-wired below; see init_pair() calls
 	}
 	else
 	{
