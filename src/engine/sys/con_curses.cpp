@@ -702,6 +702,7 @@ char *CON_Input( void )
 				continue;
 
 			case KEY_NPAGE:
+			case 14: //ctrl-N
 				if ( lastline > scrollline + LOG_LINES )
 				{
 					scrollline += LOG_SCROLL;
@@ -716,7 +717,7 @@ char *CON_Input( void )
 				}
 
 				continue;
-
+			case 16: //ctrl-P
 			case KEY_PPAGE:
 				if ( scrollline > 0 )
 				{
