@@ -478,21 +478,42 @@ void SVC_Status( netadr_t from, const Cmd::Args& args )
 	int           statusLength;
 	int           playerLength;
 	char          infostring[ MAX_INFO_STRING ];
+	const char    *challenge = nullptr;
 
+<<<<<<< HEAD
 	//bani - bugtraq 12534
 	if ( args.Argc() > 1 && !SV_VerifyChallenge( args.Argv(1).c_str() ) )
+=======
+	if ( args.Argc() < 2 )
+	{
+		challenge = "";
+	}
+	else
+	{
+		challenge = args.Argv(1).c_str();
+	}
+
+	//bani - bugtraq 12534
+	if ( !SV_VerifyChallenge( challenge ) )
+>>>>>>> origin/master
 	{
 		return;
 	}
 
 	Q_strncpyz( infostring, Cvar_InfoString( CVAR_SERVERINFO, qfalse ), MAX_INFO_STRING );
 
+<<<<<<< HEAD
 	if ( args.Argc() > 1 )
 	{
 		// echo back the parameter to status. so master servers can use it as a challenge
 		// to prevent timed spoofed reply packets that add ghost servers
 		Info_SetValueForKey( infostring, "challenge", args.Argv(1).c_str(), qfalse );
 	}
+=======
+	// echo back the parameter to status. so master servers can use it as a challenge
+	// to prevent timed spoofed reply packets that add ghost servers
+	Info_SetValueForKey( infostring, "challenge", challenge, qfalse );
+>>>>>>> origin/master
 
 	status[ 0 ] = 0;
 	statusLength = 0;
