@@ -40,7 +40,7 @@ include( CMakeDependentOption )
 set( MSVC_INCREMENTAL_DEFAULT ON )
 
 # Default to Release builds. To use system CFLAGS only (for distro builds), set CMAKE_BUILD_TYPE to None
-set( CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release Rwdi MinSizeRel." )
+set( CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." )
 
 project( Daemon C CXX )
 
@@ -166,16 +166,16 @@ endmacro()
 if( MSVC )
   set_c_cxx_flag( "/MP" )
   set_c_cxx_flag( "/fp:fast" )
-  set_c_cxx_flag( "/d2Zi+" RWDI )
+  set_c_cxx_flag( "/d2Zi+" RELWITHDEBINFO )
   if( ARCH STREQUAL "x86" )
     set_c_cxx_flag( "/arch:SSE2" )
   endif()
   if( USE_LTO )
     set_c_cxx_flag( "/GL" MINSIZEREL )
-    set_c_cxx_flag( "/GL" RWDI )
+    set_c_cxx_flag( "/GL" RELWITHDEBINFO )
     set_c_cxx_flag( "/GL" RELEASE )
     set_linker_flag( "/LTCG" MINSIZEREL )
-    set_linker_flag( "/LTCG" RWDI )
+    set_linker_flag( "/LTCG" RELWITHDEBINFO )
     set_linker_flag( "/LTCG" RELEASE )
   endif()
 else()
@@ -199,7 +199,7 @@ else()
 
   # Extra debug flags
   set_c_cxx_flag( "-g3" DEBUG )
-  set_c_cxx_flag( "-g3" RWDI )
+  set_c_cxx_flag( "-g3" RELWITHDEBINFO )
   if( USE_DEBUG_OPTIMIZE )
     try_c_cxx_flag( OPTIMIZE_DEBUG "-Og" DEBUG )
   endif()
@@ -226,7 +226,7 @@ else()
 
   # Hardening, don't set _FORTIFY_SOURCE in debug builds
   set_c_cxx_flag( "-D_FORTIFY_SOURCE=2" RELEASE )
-  set_c_cxx_flag( "-D_FORTIFY_SOURCE=2" RWDI )
+  set_c_cxx_flag( "-D_FORTIFY_SOURCE=2" RELWITHDEBINFO )
   set_c_cxx_flag( "-D_FORTIFY_SOURCE=2" MINSIZEREL )
   if( USE_HARDENING )
     try_c_cxx_flag( FSTACK_PROTECTOR_STRONG "-fstack-protector-strong" )
@@ -481,7 +481,7 @@ function( ADD_PRECOMPILED_HEADER Target Header )
     separate_arguments( Flags )
 
     # Get the per-configuration compile flags
-    foreach( Config Debug Release Rwdi MinSizeRel )
+    foreach( Config Debug Release RelWithDebInfo MinSizeRel )
       string( TOUPPER ${Config} CONFIG )
       set( ConfigFlags ${CMAKE_CXX_FLAGS_${CONFIG}} )
       separate_arguments( ConfigFlags )
@@ -1494,9 +1494,9 @@ function( GAMEMODULE )
         $<$<CONFIG:Release>:-DNDEBUG>
         $<$<CONFIG:Debug>:-O0>
         $<$<CONFIG:Debug>:-g3>
-        $<$<CONFIG:Rwdi>:-O2>
-        $<$<CONFIG:Rwdi>:-DNDEBUG>
-        $<$<CONFIG:Rwdi>:-g3>
+        $<$<CONFIG:RelWithDebInfo>:-O2>
+        $<$<CONFIG:RelWithDebInfo>:-DNDEBUG>
+        $<$<CONFIG:RelWithDebInfo>:-g3>
         $<$<CONFIG:MinSizeRel>:-Os>
         $<$<CONFIG:MinSizeRel>:-DNDEBUG>
       )
@@ -1505,7 +1505,7 @@ function( GAMEMODULE )
         $<$<CONFIG:None>:-O3>
         $<$<CONFIG:Release>:-O3>
         $<$<CONFIG:Debug>:-O0>
-        $<$<CONFIG:Rwdi>:-O2>
+        $<$<CONFIG:RelWithDebInfo>:-O2>
         $<$<CONFIG:MinSizeRel>:-O2>
       )
     endif()
