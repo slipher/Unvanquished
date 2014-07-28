@@ -61,6 +61,9 @@ Maryland 20850 USA.
 #define CLIENT_WINDOW_MIN_TITLE PRODUCT_NAME_LOWER
 #define GAMENAME_FOR_MASTER     PRODUCT_NAME_UPPER
 
+#if defined(BUILD_CLIENT) || defined(BUILD_TTY_CLIENT)
+#define ANY_BUILD_CLIENT
+#endif
 
 #define AUTOEXEC_NAME           "autoexec.cfg"
 

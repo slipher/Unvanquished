@@ -376,7 +376,7 @@ void NORETURN Com_Quit_f( void )
 		// a corrupt call stack makes no difference
 		SV_Shutdown( p[ 0 ] ? p : "Server quit\n" );
 //bani
-#ifdef BUILD_CLIENT
+#ifdef ANY_BUILD_CLIENT
 		CL_ShutdownCGame();
 #endif
 		CL_Shutdown();
@@ -1015,11 +1015,11 @@ The server calls this before shutting down or loading a new map
 */
 void Hunk_Clear( void )
 {
-#ifdef BUILD_CLIENT
+#ifdef ANY_BUILD_CLIENT
 	CL_ShutdownCGame();
 #endif
 	SV_ShutdownGameProgs();
-#ifdef BUILD_CLIENT
+#ifdef ANY_BUILD_CLIENT
 	CIN_CloseAllVideos();
 #endif
 	hunk_low.mark = 0;
@@ -1752,7 +1752,7 @@ void Com_Init( char *commandLine )
 	Cmd::BufferCommandText("preset default.cfg");
 #endif
 
-#ifdef BUILD_CLIENT
+#ifdef ANY_BUILD_CLIENT
 	// skip the q3config.cfg if "safe" is on the command line
 	if ( !Com_SafeMode() )
 	{
@@ -2009,7 +2009,7 @@ void Com_WriteConfiguration( void )
 		Com_WriteConfigToFile( CONFIG_NAME, Cvar_WriteVariables );
 	}
 
-#ifdef BUILD_CLIENT
+#ifdef ANY_BUILD_CLIENT
 	if ( bindingsModified )
 	{
 		bindingsModified = qfalse;
