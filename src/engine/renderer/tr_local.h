@@ -3997,4 +3997,6 @@ static inline byte floatToSnorm8(float f) {
 
 	void       R_SetAltShaderTokens( const char * );
 
+	void R_DD_addTri(ddraw_tri);
+
 #endif // TR_LOCAL_H

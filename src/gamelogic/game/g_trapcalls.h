@@ -111,4 +111,6 @@ void             trap_BotAddObstacle( const vec3_t mins, const vec3_t maxs, qhan
 void             trap_BotRemoveObstacle( qhandle_t handle );
 void             trap_BotUpdateObstacles( void );
 
+void trap_setddon(qboolean x);
+
 #endif // G_TRAPCALLS_H_

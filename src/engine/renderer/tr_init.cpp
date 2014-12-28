@@ -1749,5 +1749,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 		re.GenerateTexture = RE_GenerateTexture;
 		re.ShaderNameFromHandle = RE_GetShaderNameFromHandle;
 
+		re.ddri.addTri = R_DD_addTri;
+
 		return &re;
 	}

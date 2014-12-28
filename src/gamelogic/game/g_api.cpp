@@ -674,3 +674,27 @@ void trap_BotUpdateObstacles(void)
 {
 	VM::SendMsg<BotUpdateObstaclesMsg>();
 }
+
+#include "../../common/DebugDraw.h"
+//ddraw_tri tribuf[DDRAW_TRI_BATCHSIZE];
+std::array<ddraw_tri, DDRAW_TRI_BATCHSIZE> tribuf;
+int nTris = 0;
+void gg_DebugDrawFlushTris()
+{
+	if (nTris > 0) {
+		VM::SendMsg<DebugDrawAddTrisMsg>(tribuf, nTris);
+	}
+	nTris = 0;
+}
+void gg_DebugDrawAddTri(ddraw_tri t)
+{
+	if (nTris >= DDRAW_TRI_BATCHSIZE) {
+		gg_DebugDrawFlushTris();
+	}
+	tribuf[nTris++] = t;
+}
+
+void DebugDraw::InitInterface()
+{
+	this->ddi.addTri = gg_DebugDrawAddTri;
+}

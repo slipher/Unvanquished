@@ -3463,6 +3463,7 @@ qboolean G_admin_denybuild( gentity_t *ent )
 
 qboolean G_admin_listadmins( gentity_t *ent )
 {
+
 	int  i;
 	char search[ MAX_NAME_LENGTH ] = { "" };
 	char s[ MAX_NAME_LENGTH ] = { "" };

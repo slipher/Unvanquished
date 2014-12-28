@@ -340,15 +340,31 @@ if one of them is dead/unspawned
 ================
 */
 static gentity_t *FindBuildable( buildable_t buildable );
-
+#include "../../common/DebugDraw.h"
 gentity_t *G_Reactor( void )
 {
 	static gentity_t *rc;
+	static int h = 0;
 
 	// If cache becomes invalid renew it
 	if ( !rc || rc->s.eType != ET_BUILDABLE || rc->s.modelindex != BA_H_REACTOR )
 	{
 		rc = FindBuildable( BA_H_REACTOR );
+	}
+
+	if (rc && !h) {
+		h = 1;
+		vec4_t yelo = {1, 1, 0, 1};
+		DebugDraw dd(yelo);
+		vec3_t t[3];
+		rc->s.origin;
+		memcpy(t[0], rc->s.origin, sizeof(t[0]));
+		memcpy(t[1], rc->s.origin, sizeof(t[0]));
+		memcpy(t[2], rc->s.origin, sizeof(t[0]));
+		t[1][0] += 57;
+		t[2][1] += 73;
+		dd.Tri(t);
+		//dd.BoxOutline()
 	}
 
 	return rc;

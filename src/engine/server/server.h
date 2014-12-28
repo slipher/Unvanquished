@@ -348,6 +348,8 @@ extern serverStatic_t svs; // persistent server info across maps
 extern server_t       sv; // cleared each map
 extern GameVM         *gvm; // game virtual machine
 
+extern DebugDrawFacility *ddf;
+
 extern cvar_t         *sv_fps;
 extern cvar_t         *sv_timeout;
 extern cvar_t         *sv_zombietime;
@@ -501,6 +503,8 @@ qboolean       SV_GetTag( int clientNum, int tagFileNumber, const char *tagname,
 int            SV_LoadTag( const char *mod_name );
 void           SV_GameBinaryMessageReceived( int cno, const char *buf, int buflen, int commandTime );
 void           SV_GameCommandHandler( void );
+
+void SV_setDDFptr(DebugDrawFacility *x);
 
 //
 // sv_bot.c

@@ -540,4 +540,12 @@ typedef struct polyBuffer_s
 
 // =========================================
 
+struct ddQuad
+{
+	vec3_t verts[4];
+	vec4_t color;
+	int expiration;
+};
+
+
 #endif // __TR_TYPES_H

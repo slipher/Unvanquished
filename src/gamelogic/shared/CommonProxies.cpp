@@ -37,6 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../../common/Common.h"
 #include "VMMain.h"
+#include "../../engine/qcommon/qcommon.h"
 
 const char* Trans_Gettext(const char* text) {
     return text;
@@ -93,6 +94,8 @@ namespace Cmd {
         commandsInitialized = true;
     }
 
+	DebugDrawFacility getsetddf(DebugDrawFacility h) { return{}; }
+
     void AddCommand(std::string name, const Cmd::CmdBase& cmd, std::string description) {
         if (commandsInitialized) {
             GetCommandMap()[name] = {&cmd, ""};
@@ -101,6 +104,8 @@ namespace Cmd {
             GetCommandMap()[std::move(name)] = {&cmd, std::move(description)};
         }
     }
+	//DebugDrawFacility * ddfptr2() { return NULL; }
+
 
     void RemoveCommand(const std::string& name) {
         GetCommandMap().erase(name);

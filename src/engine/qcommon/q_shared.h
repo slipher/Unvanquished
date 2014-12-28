@@ -192,6 +192,9 @@ typedef int intptr_t;
 
 	enum {qfalse, qtrue};
 	typedef int qboolean;
+	typedef struct ddf_s {
+		void(*ddon)(qboolean);
+	} DebugDrawFacility;
 	typedef enum {qno, qyes, qmaybe} qtrinary;
 
 	typedef union

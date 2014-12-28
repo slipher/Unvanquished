@@ -54,9 +54,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * commands.
  */
 
+#include "../qcommon/qcommon.h"
+
 //TODO: figure out the threading mode for commands and change the doc accordingly
 
 namespace Cmd {
+	struct commandRecord_t {
+		std::string description;
+		const CmdBase* cmd;
+	};
+
+	typedef std::unordered_map<std::string, commandRecord_t, Str::IHash, Str::IEqual> CommandMap;
 
     /*
      * The command buffer stores command to be executed for later.
@@ -86,10 +94,16 @@ namespace Cmd {
     // Removes all the commands with the given flag
     void RemoveFlaggedCommands(int flag);
 
+	void shit();
+
+	DebugDrawFacility getsetddf(DebugDrawFacility /*h*/);
+
     //TODO: figure out a way to make this convenient for non-main threads
     // Executes a raw command string as a single command. Must be called by the main thread.
     void ExecuteCommand(Str::StringRef command, bool parseCvars = false, Environment* env = nullptr);
-
+#ifdef BUILD_CLIENT
+	DebugDrawFacility *ddfptr2();
+#endif
     //Completion stuff, highly unstable :-)
     CompletionResult CompleteArgument(const Args& args, int argNum);
     CompletionResult CompleteCommandNames(Str::StringRef prefix = "");

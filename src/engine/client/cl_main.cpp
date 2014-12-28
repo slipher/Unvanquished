@@ -44,6 +44,8 @@ Maryland 20850 USA.
 #include "../sys/sys_local.h"
 #include "../botlib/bot_debug.h"
 
+#include "../../common/DebugDrawRenderInterface.h"
+
 cvar_t *cl_wavefilerecord;
 
 #include "libmumblelink.h"
@@ -406,7 +408,8 @@ void CL_VoipParseTargets( void )
 		}
 		else
 		{
-			if ( !Q_strnicmp( target, "all", 3 ) )
+			if ( !Q_strnicmp( target, 
+				, 3 ) )
 			{
 				Com_Memset( clc.voipTargets, ~0, sizeof( clc.voipTargets ) );
 				return;
@@ -3866,7 +3869,7 @@ extern refexport_t *GetRefAPI( int apiVersion, refimport_t *rimp );
 CL_InitRef
 ============
 */
-qboolean CL_InitRef( )
+qboolean CL_InitRef()
 {
 	refimport_t ri;
 	refexport_t *ret;
@@ -3935,16 +3938,17 @@ qboolean CL_InitRef( )
 
 	ri.Bot_DrawDebugMesh = BotDebugDrawMesh;
 
-	Com_Printf("%s", _( "Calling GetRefAPI…\n" ));
-	ret = GetRefAPI( REF_API_VERSION, &ri );
+	Com_Printf("%s", _("Calling GetRefAPI…\n"));
+	ret = GetRefAPI(REF_API_VERSION, &ri);
 
-	if ( !ret )
-	{
-		Com_Printf( "Couldn't initialize refresh module\n" );
+	if (!ret) {
+		Com_Printf("Couldn't initialize refresh module\n");
 		return qfalse;
 	}
 
 	re = *ret;
+	extern DebugDrawRenderInterface ddri;
+	ddri = re.ddri;
 
 	// unpause so the cgame definitely gets a snapshot and renders a frame
 	Cvar_Set( "cl_paused", "0" );

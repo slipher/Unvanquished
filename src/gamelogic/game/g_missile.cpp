@@ -492,7 +492,7 @@ void G_RunMissile( gentity_t *ent )
 	// check think function after bouncing
 	G_RunThink( ent );
 }
-
+#include "../../common/DebugDraw.h"
 gentity_t *G_SpawnMissile( missile_t missile, gentity_t *parent, vec3_t start, vec3_t dir,
                            gentity_t *target, void ( *think )( gentity_t *self ), int nextthink )
 {
@@ -504,6 +504,24 @@ gentity_t *G_SpawnMissile( missile_t missile, gentity_t *parent, vec3_t start, v
 	{
 		return NULL;
 	}
+
+	vec4_t yelo = {1, 1, 0, 1};
+	vec4_t cy = {0, 1, 1, 1};
+	vec3_t ax[3] = {{0, 50, 100}, {40, 0, 0}, {0, -100, 50}};
+	vec4_t lol = {random(), random(), random(), 1};
+
+	DebugDraw dd(lol);
+	vec3_t t[3];
+
+	dd.lineWidth = 10;
+	dd.duration = 1 << 30;
+	//dd.BoxOutline(start, ax);
+	dd.lineWidth = 2;
+	dd.bucky(start, (1+random())*222);
+	gentity_t *rc = G_Reactor();
+	//dd.Line(start, rc->r.currentOrigin);
+
+
 
 	ma = BG_Missile( missile );
 

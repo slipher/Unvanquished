@@ -71,6 +71,9 @@ class MapCmd: public Cmd::StaticCmd {
             }
 
             SV_SpawnServer(mapName.c_str());
+#ifdef BUILD_CLIENT
+			SV_setDDFptr(Cmd::ddfptr3());
+#endif
             Cvar::SetValueForce("sv_cheats", cheat ? "1" : "0");
         }
 
@@ -94,6 +97,13 @@ class MapCmd: public Cmd::StaticCmd {
 };
 static MapCmd MapCmdRegistration("map", N_("starts a new map"), false);
 static MapCmd DevmapCmdRegistration("devmap", N_("starts a new map with cheats enabled"), true);
+static MapCmd lolmap("lolmap",
+#ifdef BUILD_CLIENT
+	"build client"
+#else
+	"don't build client"
+#endif
+	, true);
 
 void MSG_PrioritiseEntitystateFields( void );
 void MSG_PrioritisePlayerStateFields( void );

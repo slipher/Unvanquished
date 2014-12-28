@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // tr_main.c -- main control flow for each frame
 #include "tr_local.h"
 
+#include "../client/client.h"
+
 trGlobals_t tr;
 
 // convert from our coordinate system (looking down X)
@@ -2405,6 +2407,200 @@ void R_DebugText( const vec3_t org, float r, float g, float b, const char *text,
 
 static BotDebugInterface_t bi = { DebugDrawBegin, DebugDrawDepthMask, DebugDrawVertex, DebugDrawEnd };
 
+
+
+#include "gl_shader.h"
+#include "../../common/DebugDrawRenderInterface.h"
+
+std::vector<ddraw_tri> ddTris;
+
+void R_DD_addTri(ddraw_tri t)
+{
+	ddTris.push_back(t);
+}
+qboolean wts( vec3_t point, viewParms_t *p, float *x, float *y )
+{
+	vec3_t trans;
+	float  xc, yc;
+	float  px, py;
+	float  z;
+
+	//px = tan( cg.refdef.fov_x * M_PI / 360.0f );
+	//py = tan(cg.refdef.fov_y * M_PI / 360.0f);
+	px = tan(p->fovX*M_PI / 360.f);
+	py = tan(p->fovY*M_PI / 360.f);
+
+	VectorSubtract(point, p->orientation.origin, trans);
+
+	//VectorSubtract( point, cg.refdef.vieworg, trans );
+
+	//xc = ( 640.0f * cg_viewsize.integer ) / 200.0f;
+	//yc = ( 480.0f * cg_viewsize.integer ) / 200.0f;
+	xc = 640.f*p->viewportWidth/200.f;
+	yc = 480.f*p->viewportHeight/200.f;
+	z = DotProduct(trans, p->orientation.axis[0]);
+
+	//z = DotProduct( trans, cg.refdef.viewaxis[ 0 ] );
+
+	if ( z <= 0.001f )
+	{
+		return qfalse;
+	}
+
+	if ( x )
+	{
+		*x = 320.0f - DotProduct( trans, p->orientation.axis[1]) * xc / ( z * px );
+	}
+
+	if ( y )
+	{
+		*y = 240.0f - DotProduct( trans, p->orientation.axis[ 2 ] ) * yc / ( z * py );
+	}
+
+	return qtrue;
+}
+void StuffDebugDraw(viewParms_t *parms)
+{
+	vec3_t wtxtpos = {339, 432, 962}, stxtpos;
+
+	static int carp = 0;
+	if (!carp) {
+		ddTris.push_back(ddraw_tri());
+		ddTris[0].expiration = 0;
+		ddTris[0].color[0] = 1;
+		ddTris[0].color[3] = 1;
+		for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+			ddTris[0].verts[i][j] = wtxtpos[j] + 50 * (j==1&&i==1) + 50 * (j==2&&i==2);
+		carp = 1;
+	}
+
+	R_SyncRenderThread();
+	GL_BindNullProgram();
+	GL_SelectTexture(0);
+	GL_Bind(tr.whiteImage);
+
+	GL_Cull(CT_TWO_SIDED);
+	gl_genericShader->DisableVertexSkinning();
+	gl_genericShader->DisableVertexAnimation();
+	gl_genericShader->DisableDeformVertexes();
+	gl_genericShader->DisableTCGenEnvironment();
+	gl_genericShader->DisableTCGenLightmap();
+	gl_genericShader->BindProgram();
+
+	GL_State(GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA);
+	//GL_State(0);
+	//GL_Cull(CT_FRONT_SIDED);
+
+	//GL_VertexAttribsState(ATTR_POSITION | ATTR_COLOR | ATTR_TEXCOORD);
+	GL_VertexAttribsState(ATTR_POSITION | ATTR_COLOR);
+
+	// set uniforms
+	gl_genericShader->SetUniform_AlphaTest(GLS_ATEST_NONE);
+	gl_genericShader->SetUniform_ColorModulate(CGEN_VERTEX, AGEN_VERTEX);
+	const vec4_t crap = {0, 0, 0, 0};
+	gl_genericShader->SetUniform_Color(crap);
+
+	// bind u_ColorMap
+	GL_SelectTexture(0);
+	GL_Bind(tr.whiteImage);
+	gl_genericShader->SetUniform_ColorTextureMatrix(matrixIdentity);
+
+	// render in world space
+	backEnd.orientation = backEnd.viewParms.world;
+	GL_LoadModelViewMatrix(backEnd.orientation.modelViewMatrix);
+	gl_genericShader->SetUniform_ModelViewProjectionMatrix(glState.modelViewProjectionMatrix[glState.stackIndex]);
+
+
+
+	glDisable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST);
+
+	glDepthMask(GL_TRUE);
+
+	int time = Sys_Milliseconds();
+
+	int nOld = ddTris.size(), nNew = 0;
+	for (int i = 0; i < nOld; i++) {
+		if (tess.numVertexes + 3 > SHADER_MAX_VERTEXES) {
+			Tess_UpdateVBOs(ATTR_POSITION | ATTR_COLOR);
+			Tess_DrawElements();
+			tess.numVertexes = 0;
+			tess.numIndexes = 0;
+		}
+		ddraw_tri *t = &ddTris[i];
+		for (int j = 0; j < 3; j++) {
+			tess.xyz[tess.numVertexes][0] = t->verts[j][0];
+			tess.xyz[tess.numVertexes][1] = t->verts[j][1];
+			tess.xyz[tess.numVertexes][2] = t->verts[j][2];
+			tess.xyz[tess.numVertexes][3] = 1.;
+			memcpy(tess.colors[tess.numVertexes], t->color, sizeof(t->color));
+			tess.indexes[tess.numIndexes++] = tess.numVertexes++;
+		}
+		if (time < t->expiration) {
+			ddTris[nNew++] = ddTris[i];
+		}
+	}
+	ddTris.erase(ddTris.begin() + nNew, ddTris.end());
+	Tess_UpdateVBOs(ATTR_POSITION | ATTR_COLOR);
+	Tess_DrawElements();
+	tess.numVertexes = 0;
+	tess.numIndexes = 0;
+
+
+
+	//`SCR_DrawSmallStringExt(100, 100, "faaa^3aart", g_color_table[5], qfalse, qfalse);
+	
+	//MatrixTransformPoint(parms->projectionMatrix, wtxtpos, stxtpos);
+	//MatrixTransformPoint(tr.viewParms.projectionMatrix, wtxtpos, stxtpos);
+	float txtx, txty;
+	wts(wtxtpos, parms, &txtx, &txty);
+	SCR_DrawSmallStringExt(txtx, txty, "point", g_color_table[5], qfalse, qfalse);
+	
+	/*//GL_DepthFunc(GL_EQUAL);
+	//GL_DepthFunc(GL_LESS);
+
+	
+	vec4_t test[4] = {{0, 0, 0, 1}, {0, 999, 0, 1}, {0, 999, 999, 1}, {0, 0, 999, 1}};
+	//Tess_InstantQuad(test);
+	//Tess_AddQuadStamp
+
+	float jj[999];
+	float *f = jj;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			for (int k = 0; k < 4; k++) {
+				*f++ = test[j][k] + (k ? 0 : 87 * i);
+				tess.xyz[4*i+j][k] = test[j][k] + (k ? 0 : 87 * i);
+			}
+			for (int k = 0; k < 3; k++) {
+				*f++ = (293052 * i + 397 * k) % 53 / 53.;
+				tess.colors[4 * i + j][k] = (293052 * i + 397 * k) % 53 / 53.;
+			}
+			*f++ = 1;
+			tess.colors[4 * i + j][3] = 1;
+		}
+		tess.indexes[6 * i] = 4*i+0;
+		tess.indexes[6 * i + 1] = 4 * i + 1;
+		tess.indexes[6 * i + 2] = 4 * i + 2;
+		tess.indexes[6 * i + 3] = 4 * i + 2;
+		tess.indexes[6 * i + 4] = 4 *i + 3;
+		tess.indexes[6 * i + 5] = 4 * i + 0;
+	}
+	tess.numVertexes = 4 * 4;
+	tess.numIndexes = 6 * 4;
+	Tess_UpdateVBOs(ATTR_POSITION | ATTR_COLOR);
+	Tess_DrawElements();
+	//Tess_End();
+	tess.numVertexes = 0;
+	tess.numIndexes = 0;*/
+
+	GL_CheckErrors();
+}
+
+
+
+
 /*
 ====================
 R_DebugGraphics
@@ -2430,6 +2626,7 @@ static void R_DebugGraphics( void )
 		GL_State( GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
 
 		ri.Bot_DrawDebugMesh( &bi );
+		
 	}
 }
 
@@ -2533,4 +2730,6 @@ void R_RenderView( viewParms_t *parms )
 
 	// draw main system development information (surface outlines, etc)
 	R_DebugGraphics();
+
+	StuffDebugDraw(parms);
 }

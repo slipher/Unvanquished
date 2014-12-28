@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../qcommon/q_shared.h"
 #include "../qcommon/vm_traps.h"
 #include "../botlib/bot_api.h"
+#include "../../common/DebugDrawRenderInterface.h"
 
 #define GAME_API_VERSION          1
 
@@ -167,7 +168,10 @@ typedef enum gameImport_s
   BOT_DISABLE_AREA,
   BOT_ADD_OBSTACLE,
   BOT_REMOVE_OBSTACLE,
-  BOT_UPDATE_OBSTACLES
+  BOT_UPDATE_OBSTACLES,
+
+  DDRAW_ADD_TRIS,
+  DDRAW_MISC
 } gameImport_t;
 
 // PrintMsg
@@ -381,7 +385,8 @@ typedef IPC::Message<IPC::Id<VM::QVM, BOT_REMOVE_OBSTACLE>, int> BotRemoveObstac
 // BotUpdateObstaclesMsg
 typedef IPC::Message<IPC::Id<VM::QVM, BOT_UPDATE_OBSTACLES>> BotUpdateObstaclesMsg;
 
-
+typedef IPC::Message< IPC::Id<VM::QVM, DDRAW_ADD_TRIS>, std::array<ddraw_tri, DDRAW_TRI_BATCHSIZE>, int > DebugDrawAddTrisMsg;
+typedef IPC::Message<IPC::Id<VM::QVM, DDRAW_MISC>, ddraw_action> DebugDrawMiscMsg;
 
 
 
@@ -474,3 +479,4 @@ typedef IPC::SyncMessage<
 typedef IPC::SyncMessage<
 	IPC::Message<IPC::Id<VM::QVM, GAME_RUN_FRAME>, int>
 > GameRunFrameMsg;
+

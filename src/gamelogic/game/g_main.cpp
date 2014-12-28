@@ -2826,8 +2826,10 @@ G_RunFrame
 Advances the non-player objects in the world
 ================
 */
+void gg_DebugDrawFlushTris();
 void G_RunFrame( int levelTime )
 {
+	gg_DebugDrawFlushTris();
 	int        i;
 	gentity_t  *ent;
 	int        msec;
@@ -2838,7 +2840,7 @@ void G_RunFrame( int levelTime )
 	{
 		return;
 	}
-
+	
 	if ( level.pausedTime )
 	{
 		msec = levelTime - level.time - level.pausedTime;

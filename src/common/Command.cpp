@@ -495,7 +495,12 @@ namespace Cmd {
         //Register this command statically
         AddCommand(std::move(name), *this, std::move(description));
     }
-
+#ifdef BUILD_CLIENT
+	DebugDrawFacility* ddfptr3()
+	{
+		return ddfptr2();
+	}
+#endif
     StaticCmd::StaticCmd(std::string name, const int flags, std::string description)
     :CmdBase(flags){
         //Register this command statically

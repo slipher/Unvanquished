@@ -37,6 +37,7 @@ Maryland 20850 USA.
 #include "server.h"
 #include "../qcommon/crypto.h"
 #include "../framework/CommonVMServices.h"
+#include "../../common/DebugDrawRenderInterface.h"
 
 // these functions must be used instead of pointer arithmetic, because
 // the game allocates gentities with private information after the server shared part
@@ -425,6 +426,13 @@ void SV_InitGameProgs(Str::StringRef mapname)
 	SV_InitGameVM( qfalse );
 }
 
+
+void SV_setDDFptr(DebugDrawFacility *x)
+{
+	ddf = x;
+}
+
+
 /*
 ====================
 SV_GetTag
@@ -613,9 +621,12 @@ void GameVM::Syscall(uint32_t id, IPC::Reader reader, IPC::Channel& channel)
 	}
 }
 
+DebugDrawRenderInterface ddri;
+
 void GameVM::QVMSyscall(int index, IPC::Reader& reader, IPC::Channel& channel)
 {
 	switch (index) {
+
 	case G_PRINT:
 		IPC::HandleMsg<PrintMsg>(channel, std::move(reader), [this](std::string text) {
 			Com_Printf("%s", text.c_str());
@@ -974,6 +985,25 @@ void GameVM::QVMSyscall(int index, IPC::Reader& reader, IPC::Channel& channel)
 
 	case BOT_UPDATE_OBSTACLES:
 		BotUpdateObstacles();
+		break;
+
+		/*case DD_ON:
+		IPC::HandleMsg<DDonMsg>(channel, std::move(reader), [this](qboolean x) {
+		//ddf->ddon(x);
+		//svgameddi.enable(x);
+		});
+		break;*/
+	case DDRAW_ADD_TRIS:
+		IPC::HandleMsg<DebugDrawAddTrisMsg>(channel, std::move(reader), [this](std::array<ddraw_tri, DDRAW_TRI_BATCHSIZE> tris, int n) {
+			for (int i = 0; i < n; i++) {
+				ddri.addTri(tris[i]);
+			}
+		});
+		break;
+	case DDRAW_MISC:
+		IPC::HandleMsg<DebugDrawMiscMsg>(channel, std::move(reader), [this](ddraw_action act) {
+			ddri.miscAction(act);
+		});
 		break;
 
 	default:

@@ -38,6 +38,7 @@ Maryland 20850 USA.
 
 #include "tr_types.h"
 #include "../../engine/botlib/bot_debug.h"
+#include "../../common/DebugDrawRenderInterface.h"
 
 #define REF_API_VERSION 10
 
@@ -199,6 +200,8 @@ typedef struct
 	void ( *Add2dPolysIndexed )( polyVert_t *polys, int numverts, int *indexes, int numindexes, int trans_x, int trans_y, qhandle_t shader );
 	qhandle_t ( *GenerateTexture )( const byte *pic, int width, int height );
 	const char *( *ShaderNameFromHandle )( qhandle_t shader );
+
+	DebugDrawRenderInterface ddri;
 } refexport_t;
 
 //

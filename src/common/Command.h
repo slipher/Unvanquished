@@ -161,6 +161,9 @@ namespace Cmd {
             StaticCmd(std::string name, int flags, std::string description);
     };
 
+	DebugDrawFacility* ddfptr3();
+	qboolean hh;
+
     /**
      * Commands can be run from an environment. For now it is only
      * used to redirect some calls (Print, ...).

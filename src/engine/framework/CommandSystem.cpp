@@ -98,12 +98,12 @@ namespace Cmd {
     */
 
     // Commands are stored alongside their description
-    struct commandRecord_t {
+    /*struct commandRecord_t {
         std::string description;
         const CmdBase* cmd;
     };
 
-    typedef std::unordered_map<std::string, commandRecord_t, Str::IHash, Str::IEqual> CommandMap;
+    typedef std::unordered_map<std::string, commandRecord_t, Str::IHash, Str::IEqual> CommandMap;*/
 
     // The order in which static global variables are initialized is undefined and commands
     // can be registered before main. The first time this function is called the command map
@@ -112,6 +112,12 @@ namespace Cmd {
         static CommandMap* commands = new CommandMap();
         return *commands;
     }
+
+	DebugDrawFacility *getddfptr()
+	{
+		static DebugDrawFacility *d = new DebugDrawFacility();
+		return d;
+	}
 
     // Used to emalute the C API
     //TODO: remove the need for this
@@ -171,7 +177,18 @@ namespace Cmd {
     // Command execution is sequential so we make their environment a global variable.
     Environment* storedEnvironment = &defaultEnv;
 
+	DebugDrawFacility getsetddf(DebugDrawFacility h)
+	{
+		static DebugDrawFacility s;
+		if (!h.ddon)
+			return s;
+		s = h;
+		return{0};
+	}
 
+	DebugDrawFacility *ddfptr2() {
+		return getddfptr();
+	}
 
     void ExecuteCommand(Str::StringRef command, bool parseCvars, Environment* env) {
         CommandMap& commands = GetCommandMap();
