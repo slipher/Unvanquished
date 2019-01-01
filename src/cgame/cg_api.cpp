@@ -31,6 +31,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ===========================================================================
 */
+#ifdef BUILD_VM_IN_PROCESS
+#include "../../daemon/src/engine/renderer/replay/cg_api.cpp"
+#else
 
 #include "cg_local.h"
 #include "engine/client/cg_msgdef.h"
@@ -152,3 +155,4 @@ void VM::VMHandleSyscall(uint32_t id, Util::Reader reader) {
         Com_Error(errorParm_t::ERR_DROP, "unhandled VM major syscall number %i", major);
     }
 }
+#endif
