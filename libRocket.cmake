@@ -526,10 +526,12 @@ set(LuaControls_SRC_FILES
     ${LIBROCKET_DIR}/Source/Controls/Lua/SelectOptionsProxy.cpp
 )
 
-if (NOT FREETYPE_INCLUDE_DIRS)
-    find_package(Freetype REQUIRED)
+if (NOT EMSCRIPTEN) # Provided in Emscripten with '-s USE_FREETYPE=1' option
+    if (NOT FREETYPE_INCLUDE_DIRS)
+        find_package(Freetype REQUIRED)
+    endif()
+    include_directories(${FREETYPE_INCLUDE_DIRS})
 endif()
-include_directories(${FREETYPE_INCLUDE_DIRS})
 
 set(ROCKET_INCLUDE_DIRS ${LIBROCKET_DIR}/Include)
 include_directories(${ROCKET_INCLUDE_DIRS})

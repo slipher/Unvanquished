@@ -78,6 +78,12 @@ include(src.cmake)
 option(BUILD_CGAME "Build client-side gamelogic" 1)
 option(BUILD_SGAME "Build server-side gamelogic" 1)
 
+if (EMSCRIPTEN)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s USE_ZLIB=1 -s USE_FREETYPE=1 -s USE_SDL=2 -s USE_WEBGL2=1 -s FULL_ES3=1 -s USE_LIBPNG=1 -s USE_OGG=1 -s USE_VORBIS=1 -s DISABLE_EXCEPTION_CATCHING=0 -s ASSERTIONS=1 -s ALLOW_MEMORY_GROWTH=1 -s TOTAL_MEMORY=268435456")
+    # -s BINARYEN_TRAP_MODE='clamp' # why am i mysterious not allowed to use this now?
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s USE_ZLIB=1")
+endif()
+
 if (BUILD_CGAME AND (BUILD_GAME_NATIVE_DLL OR BUILD_GAME_NATIVE_EXE OR NACL))
     if (NACL)
         set(FREETYPE_LIBRARY ${DEPS_DIR}/pnacl_deps/lib/libfreetype.a)
@@ -93,6 +99,11 @@ if (BUILD_CGAME AND (BUILD_GAME_NATIVE_DLL OR BUILD_GAME_NATIVE_EXE OR NACL))
     include_directories(${FREETYPE_INCLUDE_DIRS} ${LUA_INCLUDE_DIR})
     set_target_properties(ROCKET_LIB PROPERTIES FOLDER "libs")
     include_directories(${ROCKET_INCLUDE_DIRS})
+elseif (BUILD_CGAME AND EMSCRIPTEN)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/libRocket.cmake)
+    include_directories(${EXTERNAL_DEPS_DIR}/mingw32-4/include) #XXX lua.h
+    add_library(fakelua ${CMAKE_CURRENT_SOURCE_DIR}/fakelua.c)
+    set(LUA_LIBRARY fakelua)
 endif()
 
 # Warning options
