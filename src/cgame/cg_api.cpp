@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "shared/CommandBufferClient.h"
 #include "shared/CommonProxies.h"
 #include "shared/client/cg_api.h"
+#include<emscripten.h>
 
 // Symbols required by the shared VMMain code
 
@@ -47,7 +48,7 @@ int VM::VM_API_VERSION = CGAME_API_VERSION;
 void CG_Init( int serverMessageNum, int clientNum, const glconfig_t& gl, const GameStateCSs& gameState );
 void CG_Shutdown();
 
-void VM::VMHandleSyscall(uint32_t id, Util::Reader reader) {
+EMSCRIPTEN_KEEPALIVE void VM::VMHandleSyscall(uint32_t id, Util::Reader reader) {
     int major = id >> 16;
     int minor = id & 0xffff;
     if (major == VM::QVM) {
