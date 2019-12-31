@@ -44,6 +44,6 @@ double luaL_checknumber(int a, int b){return 0;}
 int luaL_loadstring(int a, int b){return 0;}
 int lua_next(int a, int b){return 0;}
 int lua_tolstring(int a,int b,int c){return 0;}
-int luaL_error(int a, int b){return 0;}
-void lua_callk(){}
-void lua_tonumberx(){}
+int luaL_error(int a, int b, int c){return 0;}
+void lua_callk(int a,int b,int c,int d,int e){}
+double lua_tonumberx(int a,int b,int c){return 0;}
