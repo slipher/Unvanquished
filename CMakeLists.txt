@@ -81,7 +81,9 @@ option(BUILD_SGAME "Build server-side gamelogic" 1)
 if (BUILD_CGAME AND (BUILD_GAME_NATIVE_DLL OR BUILD_GAME_NATIVE_EXE OR NACL))
     if (NACL)
         set(FREETYPE_LIBRARY ${DEPS_DIR}/pnacl_deps/lib/libfreetype.a)
-        set(FREETYPE_LIBRARIES ${FREETYPE_LIBRARY} ${DEPS_DIR}/pnacl_deps/lib/libpng16.a)
+        set(FREETYPE_LIBRARIES ${FREETYPE_LIBRARY}
+                               ${DEPS_DIR}/pnacl_deps/lib/libpng.a
+                               ${DEPS_DIR}/pnacl_deps/lib/libbz2.a)
         set(FREETYPE_INCLUDE_DIRS ${DEPS_DIR}/pnacl_deps/include/freetype2)
         set(LUA_INCLUDE_DIR ${DEPS_DIR}/pnacl_deps/include)
         set(LUA_LIBRARY ${DEPS_DIR}/pnacl_deps/lib/liblua.a)
