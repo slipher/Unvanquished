@@ -38,10 +38,10 @@ namespace IPC {
 // HANDLE is defined as void* in windows.h
 // Note that the NaCl code uses -1 instead of 0 to represent invalid handles
 typedef void* OSHandleType;
-const OSHandleType INVALID_HANDLE = reinterpret_cast<void*>(-1);
+constexpr OSHandleType INVALID_HANDLE = reinterpret_cast<void*>(-1);
 #else
 typedef int OSHandleType;
-const OSHandleType INVALID_HANDLE = -1;
+constexpr OSHandleType INVALID_HANDLE = -1;
 #endif
 
 // IPC descriptor which can be sent over a socket. You should treat this as an
