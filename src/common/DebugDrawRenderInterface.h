@@ -1,6 +1,8 @@
 #ifndef COMMON_DEBUGDRAWRENDERINTERFACE_H
 #define COMMON_DEBUGDRAWRENDERINTERFACE_H
 
+#include "../engine/qcommon/q_shared.h"
+
 struct ddraw_tri {
 	vec3_t verts[3];
 	vec4_t color;

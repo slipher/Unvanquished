@@ -162,7 +162,6 @@ namespace Cmd {
     };
 
 	DebugDrawFacility* ddfptr3();
-	qboolean hh;
 
     /**
      * Commands can be run from an environment. For now it is only

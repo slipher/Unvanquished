@@ -563,6 +563,9 @@ set( COMMONLIST
   ${COMMON_DIR}/Command.h
   ${COMMON_DIR}/Cvar.cpp
   ${COMMON_DIR}/Cvar.h
+  ${COMMON_DIR}/DebugDraw.h
+  ${COMMON_DIR}/DebugDrawRenderInterface.h
+  ${COMMON_DIR}/DebugDraw.cpp
   ${COMMON_DIR}/FileSystem.cpp
   ${COMMON_DIR}/FileSystem.h
   ${COMMON_DIR}/IPC.h
