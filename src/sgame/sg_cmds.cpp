@@ -4232,6 +4232,20 @@ void Cmd_Damage_f( gentity_t *ent )
 	                    nonloc ? DAMAGE_NO_LOCDAMAGE : 0, MOD_TARGET_LASER);
 }
 
+static void Throw_f( gentity_t *self )
+{
+	vec3_t forward, right, up, muzzle;
+	AngleVectors( self->client->ps.viewangles, forward, right, up );
+	G_CalcMuzzlePoint( self, forward, right, up, muzzle );
+	auto dir = Vec3::Load(forward);
+	if (dir[0] == 0.0f && dir[1] == 0.0f) dir[2] = 1.0f;
+	dir[2] = 0.0f;
+	VectorNormalize(dir.Data());
+	dir[2] = 0.5f;
+	VectorNormalize(dir.Data());
+	G_SpawnMissile( MIS_CRATE, self, muzzle, dir.Data(), nullptr, G_ExplodeMissile, level.time + 10000 );
+}
+
 /*
 =================
 Cmd_Beacon_f
@@ -4416,6 +4430,7 @@ static const commands_t cmds[] =
 	{ "setviewpos",      CMD_CHEAT_TEAM,                      Cmd_SetViewpos_f       },
 	{ "team",            0,                                   Cmd_Team_f             },
 	{ "teamvote",        CMD_TEAM | CMD_INTERMISSION,         Cmd_Vote_f             },
+	{ "throw",           CMD_TEAM | CMD_ALIVE,                Throw_f                },
 	{ "unignore",        0,                                   Cmd_Ignore_f           },
 	{ "vote",            CMD_INTERMISSION,                    Cmd_Vote_f             },
 	{ "vsay",            CMD_MESSAGE | CMD_INTERMISSION,      Cmd_VSay_f             },
