@@ -514,6 +514,8 @@ enum weapon_t
   WP_HIVE,
   WP_ROCKETPOD,
   WP_MGTURRET,
+  WP_CRATE,
+  WP_HANDS,
 
   // build weapons must remain in a block ← I'm not asking why but I can imagine
   WP_ABUILD,

@@ -3730,7 +3730,8 @@ static void PM_BeginWeaponChange( int weapon )
 	pm->ps->generic1 = WPM_NOTFIRING;
 
 	pm->ps->weaponstate = WEAPON_DROPPING;
-	pm->ps->weaponTime += 200;
+	// get rid of a crate immediately because it reappears as a missile
+	pm->ps->weaponTime += 1;
 	pm->ps->persistant[ PERS_NEWWEAPON ] = weapon;
 
 	//reset build weapon
