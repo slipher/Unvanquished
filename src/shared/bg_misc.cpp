@@ -556,6 +556,8 @@ static const weaponData_t bg_weaponsData[] =
 	{ WP_LUCIFER_CANNON,    "lcannon"   },
 	{ WP_ROCKETPOD,         "rocketpod" },
 	{ WP_MGTURRET,          "mgturret"  },
+	{ WP_CRATE,             "crate"     },
+	{ WP_HANDS,             "hands"     },
 	{ WP_ABUILD,            "abuild"    },
 	{ WP_ABUILD2,           "abuildupg" },
 	{ WP_HBUILD,            "ckit"      }
@@ -1586,6 +1588,8 @@ bool BG_InventoryContainsWeapon( int weapon, const int stats[] )
 	{
 		return true;
 	}
+
+	if (weapon == WP_CRATE || weapon == WP_HANDS) return true;
 
 	return ( stats[ STAT_WEAPON ] == weapon );
 }

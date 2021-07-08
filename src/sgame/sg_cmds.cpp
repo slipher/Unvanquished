@@ -760,6 +760,11 @@ static void Cmd_Give_f( gentity_t *ent )
 	{
 		Cmd_Give_printUsage( ent );
 	}
+
+	if ( Q_stricmp( name, "crate" ) == 0 )
+	{
+		G_ForceWeaponChange( ent, WP_CRATE );
+	}
 }
 
 /*
@@ -4095,6 +4100,8 @@ static void Cmd_Damage_f( gentity_t *ent )
 
 static void Throw_f( gentity_t *self )
 {
+	if (self->client->ps.weapon != WP_CRATE)
+		return;
 	glm::vec3 forward;
 	AngleVectors( VEC2GLM( self->client->ps.viewangles ), &forward, nullptr, nullptr );
 	glm::vec3 muzzle = G_CalcMuzzlePoint( self, forward );
@@ -4105,6 +4112,7 @@ static void Throw_f( gentity_t *self )
 	dir[2] = 0.5f;
 	VectorNormalize(dir);
 	G_SpawnDumbMissile( MIS_CRATE, self, muzzle, dir );
+	G_ForceWeaponChange(self, WP_HANDS);
 }
 
 /*
