@@ -141,7 +141,7 @@ static void BG_InitBuildableAttributes()
 		ba->name = bh->name;
 		ba->entityName = bh->classname;
 
-		ba->traj = trType_t::TR_GRAVITY;
+		ba->traj = trType_t::TR_STATIONARY;
 		ba->bounce = 0.0f;
 		ba->minNormal = 0.0f;
 

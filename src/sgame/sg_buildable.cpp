@@ -1568,16 +1568,21 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int /*distan
 	minNormal = BG_Buildable( buildable )->minNormal;
 	invert = BG_Buildable( buildable )->invertNormal;
 
+	normal[2] = 1;
+	normal[0] = normal[1] = 0;
+
 	// Can we build at this angle?
 	if ( !( normal[ 2 ] >= minNormal || ( invert && normal[ 2 ] <= -minNormal ) ) )
 	{
 		reason = IBE_NORMAL;
 	}
 
+#if 0
 	if ( tr1.entityNum != ENTITYNUM_WORLD )
 	{
 		reason = IBE_NORMAL;
 	}
+#endif
 
 	contents = G_CM_PointContents( entity_origin, -1 );
 
