@@ -1698,11 +1698,13 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int /*distan
 		}
 	}
 
+#if 0
 	//this item does not fit here
 	if ( tr2.fraction < 1.0f || tr3.fraction < 1.0f )
 	{
 		reason = IBE_NOROOM;
 	}
+#endif
 
 	if ( reason != IBE_NONE )
 	{
