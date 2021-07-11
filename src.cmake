@@ -266,6 +266,8 @@ set(SGAMELIST
     ${GAMELOGIC_DIR}/sgame/components/ArmouryComponent.h
     ${GAMELOGIC_DIR}/sgame/components/BarricadeComponent.cpp
     ${GAMELOGIC_DIR}/sgame/components/BarricadeComponent.h
+    ${GAMELOGIC_DIR}/sgame/components/BigPlatformComponent.cpp
+    ${GAMELOGIC_DIR}/sgame/components/BigPlatformComponent.h
     ${GAMELOGIC_DIR}/sgame/components/BoosterComponent.cpp
     ${GAMELOGIC_DIR}/sgame/components/BoosterComponent.h
     ${GAMELOGIC_DIR}/sgame/components/BuildableComponent.cpp

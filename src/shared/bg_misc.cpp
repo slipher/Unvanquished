@@ -61,6 +61,7 @@ static const buildableName_t bg_buildableNameList[] =
 	{ BA_H_MEDISTAT,  "medistat",  "team_human_medistat"  },
  	{ BA_H_DRILL,     "drill",     "team_human_drill"     },
 	{ BA_H_REACTOR,   "reactor",   "team_human_reactor"   },
+	{ BA_H_BIGPLATFORM, "bigplatform", "team_human_bigplatform" },
 	// Add repeater here for Tremulous compatibility. You cannot actually build it.
 	{ BA_H_DRILL,     "repeater",  "team_human_repeater"  },
 };
