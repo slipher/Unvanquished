@@ -655,6 +655,8 @@ void CG_InitBuildables()
 		// If no skeletal model found, register an md3 model instead.
 		if ( !bi->md5 )
 		{
+			bi->md5 = buildable == BA_H_BIGPLATFORM;
+
 			for ( j = 0; j < MAX_BUILDABLE_MODELS; j++ )
 			{
 				modelFile = BG_BuildableModelConfig( buildable )->models[ j ];

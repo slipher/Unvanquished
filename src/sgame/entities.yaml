@@ -317,6 +317,10 @@ components:
         requires:
             HumanBuildable:
 
+    BigPlatform:
+        requires:
+            HumanBuildable:
+
     MGTurret:
         messages:
             - PrepareNetCode
@@ -442,6 +446,10 @@ entities:
     Barricade:
         components:
             Barricade:
+
+    BigPlatform:
+        components:
+            BigPlatform:
 
     Booster:
         components:
