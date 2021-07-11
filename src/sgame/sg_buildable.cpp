@@ -1810,6 +1810,11 @@ static void BuildableSpawnCBSE(gentity_t *ent, buildable_t buildable) {
 			break;
 		}
 
+		case BA_H_BIGPLATFORM: {
+			BUILDABLE_ENTITY_CREATE(BigPlatformEntity);
+			break;
+		}
+
 		default:
 			ASSERT(false);
 	}

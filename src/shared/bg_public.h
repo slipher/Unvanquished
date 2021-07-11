@@ -605,6 +605,8 @@ enum buildable_t
 
   BA_H_REACTOR,
 
+  BA_H_BIGPLATFORM,
+
   BA_NUM_BUILDABLES
 };
 

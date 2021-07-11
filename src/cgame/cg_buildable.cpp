@@ -649,7 +649,7 @@ void CG_InitBuildables()
 		}
 		else
 		{
-			bi->md5 = false;
+			bi->md5 = buildable == BA_H_BIGPLATFORM;
 
 			for ( j = 0; j < MAX_BUILDABLE_MODELS; j++ )
 			{
