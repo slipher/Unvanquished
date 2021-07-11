@@ -2167,8 +2167,6 @@ static gentity_t *FinishSpawningBuildable( gentity_t *ent, bool force )
 	// allow to ride movers
 	built->s.groundEntityNum = tr.entityNum;
 
-	G_SetOrigin( built, tr.endpos );
-
 	trap_LinkEntity( built );
 
 	Beacon::Tag( built, (team_t)BG_Buildable( buildable )->team, true );
