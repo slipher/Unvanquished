@@ -21,7 +21,7 @@ class BigPlatformComponent: public BigPlatformComponentBase {
 		// ///////////////////// //
 
 	private:
-
+		void BigPlatformComponent::AddCrates(int timeDelta);
 };
 
 #endif // BIGPLATFORM_COMPONENT_H_
