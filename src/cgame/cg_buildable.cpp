@@ -625,7 +625,7 @@ void CG_InitBuildables()
 
 	cg.buildablesFraction = 0.0f;
 
-	for ( buildable = (buildable_t)( BA_NONE + 1 ); buildable < BA_NUM_BUILDABLES;
+	for ( buildable = (buildable_t)( BA_H_SPAWN ); buildable < BA_NUM_BUILDABLES;
 	      buildable = (buildable_t)( buildable + 1 ) )
 	{
 		buildableInfo_t *bi = &cg_buildables[ buildable ];
