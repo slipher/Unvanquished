@@ -954,7 +954,7 @@ static void CG_RegisterClients()
 	//precache all the models/sounds/etc
 	if ( !cg_lazyLoadModels.Get() )
 	{
-		for ( i = PCL_NONE + 1; i < PCL_NUM_CLASSES; i++ )
+		i = PCL_HUMAN_NAKED;
 		{
 			CG_PrecacheClientInfo( (class_t) i, BG_ClassModelConfig( i )->modelName,
 			                       BG_ClassModelConfig( i )->skinName );

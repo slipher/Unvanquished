@@ -1017,7 +1017,7 @@ void CG_InitWeapons()
 
 	memset( cg_weapons, 0, sizeof( cg_weapons ) );
 
-	for ( i = WP_NONE + 1; i < WP_NUM_WEAPONS; i++ )
+	for ( i = WP_BASH_FIRST; i < WP_NUM_WEAPONS; i++ )
 	{
 		CG_RegisterWeapon( i );
 	}
