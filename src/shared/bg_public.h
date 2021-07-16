@@ -1463,6 +1463,7 @@ struct missileAttributes_t
 	qhandle_t      model;
 	float          modelScale;
 	vec3_t         modelRotation;
+	vec3_t         modelOffset; // applied after scaling
 
 	sfxHandle_t    sound;
 	bool       usesDlight;
