@@ -811,8 +811,11 @@ const missileAttributes_t *BG_Missile( int missile )
 
 void BG_MissileBounds( const missileAttributes_t *ma, vec3_t mins, vec3_t maxs )
 {
-	mins[ 0 ] = mins[ 1 ] = mins[ 2 ] = -ma->size;
-	maxs[ 0 ] = maxs[ 1 ] = maxs[ 2 ] = ma->size;
+	for (int i = 0; i < 3; i++)
+	{
+		mins[ i ] = ma->modelOffset[ i ] - ma->size;
+		maxs[ i ] = ma->modelOffset[ i ] + ma->size;
+	}
 }
 
 /*
