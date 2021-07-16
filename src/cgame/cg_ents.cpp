@@ -447,6 +447,12 @@ static void CG_Missile( centity_t *cent )
 		{
 			VectorCopy( es->pos.trDelta, velocity );
 		}
+		else if ( es->weapon == MIS_CRATE )
+		{
+			// TODO use real x and y directions
+			velocity[0] = velocity[1] = 0;
+			velocity[2] = 1;
+		}
 		else
 		{
 			BG_EvaluateTrajectoryDelta( &es->pos, cg.time, velocity );
