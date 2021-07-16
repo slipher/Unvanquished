@@ -350,6 +350,12 @@ bool G_MissileImpact( gentity_t *ent, const trace2_t *trace )
 		case MIS_LOCKBLOB:     impactFunc = ImpactLockblock;   break;
 		case MIS_SLOWBLOB:     impactFunc = ImpactSlowblob;    break;
 		case MIS_HIVE:         impactFunc = ImpactHive;        break;
+		case MIS_CRATE:
+			if (ent->s.eFlags & EF_NO_BOUNCE_SOUND)
+				impactFunc = ImpactGrenade;
+			else
+				impactFunc = DefaultImpactFunc;
+			break;
 		default:               impactFunc = DefaultImpactFunc; break;
 	}
 
