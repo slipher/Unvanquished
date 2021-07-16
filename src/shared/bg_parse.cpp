@@ -2145,6 +2145,15 @@ void BG_ParseMissileDisplayFile( const char *filename, missileAttributes_t *ma )
 			PARSE( text, token );
 			ma->modelRotation[ 2 ] = atof( token );
 		}
+		else if ( !Q_stricmp( token, "modelOffset" ) )
+		{
+			PARSE( text, token );
+			ma->modelOffset[ 0 ] = atof( token );
+			PARSE( text, token );
+			ma->modelOffset[ 1 ] = atof( token );
+			PARSE( text, token );
+			ma->modelOffset[ 2 ] = atof( token );
+		}
 		else if ( !Q_stricmp( token, "sound" ) )
 		{
 			PARSE( text, token );
