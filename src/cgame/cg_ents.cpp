@@ -565,6 +565,8 @@ static void CG_Missile( centity_t *cent )
 	// Only refresh if there is something to display.
 	if ( ma->sprite || ma->model )
 	{
+		// as missile model it's inside out but as weapon model somehow doesn't require this
+		if (ma->number == MIS_CRATE) ent.renderfx |= RF_SWAPCULL;
 		trap_R_AddRefEntityToScene( &ent );
 	}
 }
