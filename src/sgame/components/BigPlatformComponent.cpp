@@ -19,6 +19,6 @@ void BigPlatformComponent::AddCrates(int timeDelta)
 		entity.oldEnt->s.origin[2] + platformMaxs[2] - crateMins[2] + 3 };
 	vec3_t velocity{0, 0, -0.01};
 	// EF_NO_BOUNCE_SOUND to distinguish crate sitting on ground from a throw one
-	G_SpawnMissile( MIS_CRATE, &g_entities[0], location, velocity, nullptr, G_ExplodeMissile, INT_MAX )
+	G_SpawnMissile( MIS_CRATE, &g_entities[ENTITYNUM_NONE], location, velocity, nullptr, G_ExplodeMissile, INT_MAX )
 		->s.eFlags |= EF_NO_BOUNCE_SOUND | EF_BOUNCE_HALF;
 }

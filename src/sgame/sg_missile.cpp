@@ -514,6 +514,12 @@ void G_RunMissile( gentity_t *ent )
 	// get current position
 	BG_EvaluateTrajectory( &ent->s.pos, level.time, origin );
 
+	// if ownerNum is not ENTITYNUM_NONE then collision detection of players with a resting crate does not work
+	// but if it is ENTITYNUM_NONE then the resting crate bounces up and down from prediction errors!
+	int tmpOwnerNum = 999;
+	if (ent->s.eFlags & EF_NO_BOUNCE_SOUND)
+		std::swap(tmpOwnerNum, ent->r.ownerNum);
+
 	// ignore interactions with the missile owner
 	passent = ent->r.ownerNum;
 
@@ -564,6 +570,8 @@ void G_RunMissile( gentity_t *ent )
 			}
 		}
 	}
+	if (ent->s.eFlags & EF_NO_BOUNCE_SOUND)
+		std::swap(tmpOwnerNum, ent->r.ownerNum);
 
 	VectorCopy( tr.endpos, ent->r.currentOrigin );
 
@@ -596,7 +604,7 @@ void G_RunMissile( gentity_t *ent )
 
 	ent->r.contents = CONTENTS_SOLID; //trick trap_LinkEntity into...
 	trap_LinkEntity( ent );
-	ent->r.contents = 0; //...encoding bbox information
+	// ent->r.contents = 0; //...encoding bbox information
 
 	if ( ent->flightSplashDamage )
 	{
