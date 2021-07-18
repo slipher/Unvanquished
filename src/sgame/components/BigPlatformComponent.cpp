@@ -12,7 +12,7 @@ static void UseCrate(gentity_t* crate, gentity_t* player, gentity_t*)
 BigPlatformComponent::BigPlatformComponent(Entity& entity, HumanBuildableComponent& r_HumanBuildableComponent)
 	: BigPlatformComponentBase(entity, r_HumanBuildableComponent)
 {
-	REGISTER_THINKER(AddCrates, ThinkingComponent::SCHEDULER_AVERAGE, 3000);
+	REGISTER_THINKER(AddCrates, ThinkingComponent::SCHEDULER_AVERAGE, 200);
 }
 
 
@@ -90,10 +90,15 @@ static void TryAddCrate(const vec3_t location)
 
 void BigPlatformComponent::AddCrates(int timeDelta)
 {
-	vec3_t unused, platformMaxs, crateMins;
-	BG_BuildableBoundingBox( BA_H_BIGPLATFORM, unused, platformMaxs);
+	vec3_t unused, platformMins, platformMaxs, crateMins;
+	BG_BuildableBoundingBox( BA_H_BIGPLATFORM, platformMins, platformMaxs);
+	VectorAdd(platformMins, entity.oldEnt->s.origin, platformMins);
+	VectorAdd(platformMaxs, entity.oldEnt->s.origin, platformMaxs);
+	float xlerp = 0.1 + random() * 0.8;
+	float ylerp = 0.1 + random() * 0.8;
 	BG_MissileBounds(BG_Missile(MIS_CRATE), crateMins, unused);
-	vec3_t location{ entity.oldEnt->s.origin[0] + 100, entity.oldEnt->s.origin[1] + 100,
-		entity.oldEnt->s.origin[2] + platformMaxs[2] - crateMins[2] + 3 };
+	vec3_t location{ platformMins[0] + xlerp * (platformMaxs[0] - platformMins[0]),
+	                 platformMins[1] + ylerp * (platformMaxs[1] - platformMins[1]),
+	                 platformMaxs[2] - crateMins[2] + 3 };
 	TryAddCrate(location);
 }
