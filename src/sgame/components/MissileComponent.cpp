@@ -69,6 +69,12 @@ static trace2_t MissileTrace(gentity_t* ent)
 	vec3_t origin;
 	BG_EvaluateTrajectory(&ent->s.pos, level.time, origin);
 
+	// if ownerNum is not ENTITYNUM_NONE then collision detection of players with a resting crate does not work
+	// but if it is ENTITYNUM_NONE then the resting crate bounces up and down from prediction errors!
+	int tmpOwnerNum = 999;
+	if (ent->s.eFlags & EF_NO_BOUNCE_SOUND)
+		std::swap(tmpOwnerNum, ent->r.ownerNum);
+
 	// ignore interactions with the missile owner
 	int passent = ent->r.ownerNum;
 
@@ -112,6 +118,10 @@ static trace2_t MissileTrace(gentity_t* ent)
 			VectorSet(result.plane.normal, 1, 0, 0);
 		}
 	}
+
+	if (ent->s.eFlags & EF_NO_BOUNCE_SOUND)
+		std::swap(tmpOwnerNum, ent->r.ownerNum);
+
 	return result;
 }
 
@@ -141,7 +151,7 @@ static bool MoveMissile(gentity_t* ent)
 
 	ent->r.contents = CONTENTS_SOLID; //trick trap_LinkEntity into...
 	trap_LinkEntity(ent);
-	ent->r.contents = 0; //...encoding bbox information
+	//ent->r.contents = 0; //...encoding bbox information
 
 	return false;
 }
