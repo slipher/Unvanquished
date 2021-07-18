@@ -809,12 +809,20 @@ const missileAttributes_t *BG_Missile( int missile )
 	       &bg_missiles[ missile - 1 ] : &nullMissile;
 }
 
+Cvar::Cvar<float> cratex = Cvar::Cvar<float>("cratex", "", 0, 0);
+Cvar::Cvar<float> cratey = Cvar::Cvar<float>("cratey", "", 0, 0);
+Cvar::Cvar<float> cratez = Cvar::Cvar<float>("cratez", "", 0, 0);
 void BG_MissileBounds( const missileAttributes_t *ma, vec3_t mins, vec3_t maxs )
 {
 	for (int i = 0; i < 3; i++)
 	{
 		mins[ i ] = ma->modelOffset[ i ] - ma->size;
 		maxs[ i ] = ma->modelOffset[ i ] + ma->size;
+	}
+	if (ma->number == MIS_CRATE) {
+		mins[0] += *cratex; maxs[0] += *cratex;
+		mins[1] += *cratey; maxs[1] += *cratey;
+		mins[2] += *cratez; maxs[2] += *cratez;
 	}
 }
 
