@@ -15,6 +15,61 @@ BigPlatformComponent::BigPlatformComponent(Entity& entity, HumanBuildableCompone
 	REGISTER_THINKER(AddCrates, ThinkingComponent::SCHEDULER_AVERAGE, 3000);
 }
 
+
+static void SetBuildableLinkState()
+{
+	int       i;
+	gentity_t *ent;
+
+	for ( i = MAX_CLIENTS, ent = g_entities + i; i < level.num_entities; i++, ent++ )
+	{
+		if ( ent->s.eType != entityType_t::ET_MISSILE )
+		{
+			continue;
+		}
+
+		gentity_t* a = g_entities + 800;
+		memcpy(a, g_entities, sizeof(*a));
+
+		// important // memset(&a->r, 0, sizeof(a->r));
+		memset(&a->s, 0, sizeof(a->s));
+
+		sizeof(a->r);
+		memset((char*)(&a->r) + 0, 0, 56);
+		constexpr int joeue = offsetof(entityShared_t, contents);
+
+
+		memset((char*)(&a->r) + 60, 0, 140);
+		//important // memset((char*)(&a->r) + 48, 0, 52);
+
+		
+
+		//VectorCopy(ent->r.mins, a->r.mins);
+		//VectorCopy(ent->r.maxs, a->r.maxs);
+
+		//VectorCopy(ent->r.absmin, a->r.absmin); // not important
+		//VectorCopy(ent->r.absmax, a->r.absmax);
+
+		a->s.number = 800;
+		VectorCopy(ent->s.origin, a->s.origin);
+		a->s.origin[0] += 50;
+		a->client = nullptr;
+		VectorCopy(ent->r.currentOrigin, a->r.currentOrigin);
+		a->r.currentOrigin[0] += 50;
+		a->r.ownerNum = ENTITYNUM_NONE;
+		//a->r.contents = g_entities[0].r.contents;
+		//ent->r.ownerNum = ENTITYNUM_NONE;
+		a->r.contents = CONTENTS_BODY;
+
+		//ent->r.contents = CONTENTS_BODY;
+		//ent->clipmask   = MASK_PLAYERSOLID;
+
+		{
+			trap_LinkEntity( a );
+		}
+	}
+}
+
 static void TryAddCrate(const vec3_t location)
 {
 	trace_t trace;
