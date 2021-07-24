@@ -1,5 +1,6 @@
 #include "BigPlatformComponent.h"
 #include "sgame/sg_local.h"
+#include "sgame/CBSE.h"
 
 static void UseCrate(gentity_t* crate, gentity_t* player, gentity_t*)
 {
@@ -15,6 +16,18 @@ BigPlatformComponent::BigPlatformComponent(Entity& entity, HumanBuildableCompone
 	REGISTER_THINKER(AddCrates, ThinkingComponent::SCHEDULER_AVERAGE, 200);
 }
 
+static gentity_t *SpawnDumbMissileRestingCrate( missile_t missile, gentity_t *parent, const glm::vec3 &start, const glm::vec3 &dir )
+{
+	gentity_t *m = G_NewEntity( HAS_CBSE );
+	RestingCrateEntity::Params params;
+	params.oldEnt = m;
+	params.Health_maxHealth = 5;
+	params.Missile_attributes = BG_Missile( missile );
+	m->entity = new RestingCrateEntity{ params };
+	G_SetUpMissile( m, parent, GLM4READ( start ), GLM4READ( dir ) );
+	return m;
+}
+
 static void TryAddCrate(const glm::vec3& location)
 {
 	trace_t trace;
@@ -28,7 +41,7 @@ static void TryAddCrate(const glm::vec3& location)
 
 	glm::vec3 velocity{0, 0, -0.01};
 	// EF_NO_BOUNCE_SOUND to distinguish crate sitting on ground from a throw one
-	gentity_t* crate = G_SpawnDumbMissile(MIS_CRATE, &g_entities[ENTITYNUM_NONE], location, velocity);
+	gentity_t* crate = SpawnDumbMissileRestingCrate(MIS_CRATE, &g_entities[ENTITYNUM_NONE], location, velocity);
 	crate->s.eFlags |= EF_NO_BOUNCE_SOUND | EF_BOUNCE_HALF;
 	crate->use = UseCrate;
 }

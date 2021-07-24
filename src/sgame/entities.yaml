@@ -71,6 +71,13 @@ messages:
     MissileSteer:
 
 components:
+    RestingCrate:
+        messages:
+            Die:
+        requires:
+            Health:
+            Thinking:
+
     #####################
     # Common Components #
     #####################
@@ -514,6 +521,11 @@ entities:
     #####################
     # Unsorted Entities #
     #####################
+
+    RestingCrate:
+        components:
+            RestingCrate:
+            Missile:
 
     Fire:
         components:
