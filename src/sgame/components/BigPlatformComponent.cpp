@@ -1,5 +1,6 @@
 #include "BigPlatformComponent.h"
 #include "sgame/sg_local.h"
+#include "sgame/CBSE.h"
 
 static void UseCrate(gentity_t* crate, gentity_t* player, gentity_t*)
 {
@@ -31,6 +32,11 @@ static void TryAddCrate(const vec3_t location)
 	gentity_t* crate = G_SpawnMissile(MIS_CRATE, &g_entities[ENTITYNUM_NONE], location, velocity, nullptr, G_ExplodeMissile, INT_MAX);
 	crate->s.eFlags |= EF_NO_BOUNCE_SOUND | EF_BOUNCE_HALF;
 	crate->use = UseCrate;
+	RestingCrateEntity::Params p;
+	p.oldEnt = crate;
+	p.Health_maxHealth = 5;
+	ASSERT_EQ(crate->entity, level.emptyEntity);
+	crate->entity = new RestingCrateEntity(p);
 }
 
 void BigPlatformComponent::AddCrates(int timeDelta)

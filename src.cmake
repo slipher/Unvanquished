@@ -306,6 +306,8 @@ set(SGAMELIST
     ${GAMELOGIC_DIR}/sgame/components/OvermindComponent.h
     ${GAMELOGIC_DIR}/sgame/components/ReactorComponent.cpp
     ${GAMELOGIC_DIR}/sgame/components/ReactorComponent.h
+    ${GAMELOGIC_DIR}/sgame/components/RestingCrateComponent.cpp
+    ${GAMELOGIC_DIR}/sgame/components/RestingCrateComponent.h
     ${GAMELOGIC_DIR}/sgame/components/RocketpodComponent.cpp
     ${GAMELOGIC_DIR}/sgame/components/RocketpodComponent.h
     ${GAMELOGIC_DIR}/sgame/components/SpawnerComponent.cpp
