@@ -69,6 +69,13 @@ messages:
           type: Vec3&
 
 components:
+    RestingCrate:
+        messages:
+            Die:
+        requires:
+            Health:
+            Thinking:
+
     #####################
     # Common Components #
     #####################
@@ -508,6 +515,10 @@ entities:
     #####################
     # Unsorted Entities #
     #####################
+
+    RestingCrate:
+        components:
+            RestingCrate:
 
     Fire:
         components:
