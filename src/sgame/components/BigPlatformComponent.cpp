@@ -13,7 +13,7 @@ static void UseCrate(gentity_t* crate, gentity_t* player, gentity_t*)
 BigPlatformComponent::BigPlatformComponent(Entity& entity, HumanBuildableComponent& r_HumanBuildableComponent)
 	: BigPlatformComponentBase(entity, r_HumanBuildableComponent)
 {
-	REGISTER_THINKER(AddCrates, ThinkingComponent::SCHEDULER_AVERAGE, 200);
+	REGISTER_THINKER(AddCrates, ThinkingComponent::SCHEDULER_AVERAGE, 1000);
 }
 
 static void TryAddCrate(const vec3_t location)
