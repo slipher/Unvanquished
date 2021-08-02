@@ -69,7 +69,7 @@ void CG_BuildSolidList()
 		{
 			cg_triggerEntities.append(cent);
 		}
-		else if ( cent->nextState.solid && ent->eType != entityType_t::ET_MISSILE )
+		else if ( cent->nextState.solid )
 		{
 			cent->contents |= CONTENTS_SOLID;
 
@@ -152,6 +152,10 @@ static void CG_ClipMoveToEntities( const vec3_t start, const vec3_t mins,
 				{
 					bmaxs[ 2 ] = static_cast<int>( bmaxs[ 2 ] * BARRICADE_SHRINKPROP );
 				}
+			}
+			else if ( ent->eType == entityType_t::ET_MISSILE )
+			{
+				BG_MissileBounds( BG_Missile( ent->weapon ), bmins, bmaxs );
 			}
 			else
 			{
