@@ -1901,6 +1901,29 @@ static void CheckIntermissionExit()
 	ExitLevel();
 }
 
+bool bashRound;
+
+void CheckBashRules()
+{
+	if (!bashRound) return;
+	std::string message;
+	switch (level.team[TEAM_HUMANS].numAliveClients) {
+	case 0:
+		message = "Tie";
+		break;
+	case 1:
+		ForEntities<HumanClassComponent>([&](Entity& human, HumanClassComponent&) {
+			message = human.oldEnt->client->pers.netname;
+			message += " ^*wins";
+		});
+		break;
+	default:
+		return;
+	}
+	bashRound = false;
+	trap_SendServerCommand(-1, va("cp %s", Quote(message.c_str())));
+}
+
 /*
 =================
 CheckExitRules
@@ -1912,6 +1935,7 @@ can see the last frag.
 */
 void CheckExitRules()
 {
+	CheckBashRules();
 	if ( g_cheats && g_neverEnd.Get() ) {
 		return;
 	}
