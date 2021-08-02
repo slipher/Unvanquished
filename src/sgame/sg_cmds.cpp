@@ -4362,6 +4362,12 @@ int G_FloodLimited( gentity_t *ent )
 	return ms;
 }
 
+void Cmd_BashRound( gentity_t* )
+{
+	extern bool bashRound;
+	bashRound = true;
+}
+
 static void Cmd_Pubkey_Identify_f( gentity_t *ent )
 {
 	char            buffer[ MAX_STRING_CHARS ];
@@ -4396,6 +4402,7 @@ static const commands_t cmds[] =
 	{ "a",               CMD_MESSAGE | CMD_INTERMISSION,      Cmd_AdminMessage_f     },
 	{ "addcon",          CMD_CHEAT,                           Cmd_AddConnection      },
 	{ "asay",            CMD_MESSAGE | CMD_INTERMISSION,      Cmd_Say_f              },
+	{ "bashround",       CMD_CHEAT,                           Cmd_BashRound          },
 	{ "beacon",          CMD_TEAM | CMD_ALIVE,                Cmd_Beacon_f           },
 	{ "build",           CMD_TEAM | CMD_ALIVE,                Cmd_Build_f            },
 	{ "buy",             CMD_HUMAN | CMD_ALIVE,               Cmd_Buy_f              },
