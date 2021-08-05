@@ -1156,7 +1156,12 @@ CG_CenterPrint_f
 */
 void CG_CenterPrint_f()
 {
-	CG_CenterPrint( CG_Argv( 1 ), 1.0f );
+	int size = atoi( CG_Argv( 2 ) );
+	if ( size <= 0 )
+	{
+		size = BIGCHAR_WIDTH;
+	}
+	CG_CenterPrint( CG_Argv( 1 ), float(size) / BIGCHAR_WIDTH );
 }
 
 /*
