@@ -1903,6 +1903,26 @@ static void CheckIntermissionExit()
 
 bool bashRound;
 
+void SetUpBashRound()
+{
+	std::vector<gentity_t*> players;
+	ForEntities<ClientComponent>([&](Entity& entity, ClientComponent& client) {
+		if (players.size() == 4) return;
+		if (client.GetTeamComponent().Team() == TEAM_HUMANS)
+			players.push_back(entity.oldEnt);
+	});
+	BigPlatformComponent* platform = nullptr;
+	ForEntities<BigPlatformComponent>([&](Entity&, BigPlatformComponent& component) {
+		platform = &component;
+	});
+	if (!platform) {
+		Log::Warn("no bigplatform");
+		return;
+	}
+	platform->StartRound(players);
+	bashRound = true;
+}
+
 void CheckBashRules()
 {
 	if (!bashRound) return;

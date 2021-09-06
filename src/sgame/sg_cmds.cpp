@@ -4164,8 +4164,8 @@ int G_FloodLimited( gentity_t *ent )
 
 void Cmd_BashRound( gentity_t* )
 {
-	extern bool bashRound;
-	bashRound = true;
+	void SetUpBashRound();
+	SetUpBashRound();
 }
 
 // commands must be in alphabetical order!
