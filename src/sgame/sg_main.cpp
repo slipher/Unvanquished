@@ -1921,7 +1921,7 @@ void CheckBashRules()
 		return;
 	}
 	bashRound = false;
-	trap_SendServerCommand(-1, va("cp %s", Quote(message.c_str())));
+	trap_SendServerCommand(-1, va("cp %s 33", Quote(message.c_str())));
 }
 
 /*
