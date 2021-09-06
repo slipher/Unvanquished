@@ -20,8 +20,18 @@ class BigPlatformComponent: public BigPlatformComponentBase {
 
 		// ///////////////////// //
 
+		void CleanUp();
+		void StartRound(const std::vector<gentity_t*>& players);
+
 	private:
 		void AddCrates(int timeDelta);
+		void Countdown(int timeDelta);
+		void Bounds(vec3_t mins, vec3_t maxs);
+		void BigPlatformComponent::Place(gentity_t* player, int position);
+		void ImmobilizePlayers(int timeDelta);
+
+		int countdown_;
+		std::array<GentityRef, 4> players_;
 };
 
 #endif // BIGPLATFORM_COMPONENT_H_
