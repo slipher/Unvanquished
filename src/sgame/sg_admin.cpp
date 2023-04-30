@@ -508,6 +508,37 @@ static const g_admin_flag_t g_admin_flags[] = {
 };
 #define adminNumFlags ARRAY_LEN( g_admin_flags )
 
+class AdminwikiCmd : Cmd::StaticCmd {
+public:
+	AdminwikiCmd() : StaticCmd("adminwiki", "dump mediawiki-formatted table of admin commands") {}
+
+	void Run(const Cmd::Args&) const override {
+		std::stringstream out;
+		out << "{|\n";
+		out << "|-\n";
+		out << "! Name and usage\n";
+		out << "! Flag\n";
+		out << "! Description\n";
+
+		for (const g_admin_cmd_t& cmd : g_admin_cmds) {
+			if (!cmd.keyword) continue;
+			out << "|-\n";
+			out << "| " << "<code><b>" << cmd.keyword << "</b>";
+			if (*cmd.syntax) out << " <nowiki>" << Color::StripColors(cmd.syntax) << "</nowiki>";
+			out << "</code> || <code>" << cmd.flag << "</code>";
+			out << " || <nowiki>" << cmd.function << "</nowiki>\n";
+		}
+		out << "|}\n";
+		fileHandle_t f;
+		trap_FS_FOpenFile("adminwiki.txt", &f, fsMode_t::FS_WRITE);
+		std::string content = out.str();
+		trap_FS_Write(content.data(), content.size(), f);
+		trap_FS_FCloseFile(f);
+		Print("Admin command table saved to game/adminwiki.txt");
+	}
+};
+static AdminwikiCmd htns;
+
 static int        admin_level_maxname = 0;
 g_admin_level_t   *g_admin_levels = nullptr;
 g_admin_admin_t   *g_admin_admins = nullptr;
