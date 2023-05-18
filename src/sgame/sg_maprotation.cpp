@@ -1674,6 +1674,30 @@ static void G_LoadMaprotation( const char *fileName )
 	}
 }
 
+class MapRotationEvalExprCmd : public Cmd::CmdBase
+{
+public:
+	MapRotationEvalExprCmd() : CmdBase( 0 ) {}
+
+	void Run( const Cmd::Args& args ) const override
+	{
+		std::string expr = args.ConcatArgs( 1 ) + " **EOF**";
+		const char *p = expr.c_str();
+		mrValue_t result;
+		std::string unused;
+		const char *lastToken;
+		if ( ParseExpression( &p, result, unused, lastToken ) && 0 == strcmp( lastToken, "**EOF**" ) )
+		{
+			Print( "%g", result );
+		}
+		else
+		{
+			Print( "failed to parse expression" );
+		}
+	}
+};
+static MapRotationEvalExprCmd evalCmd;
+
 /*
 ===============
 G_InitMapRotations
@@ -1683,6 +1707,7 @@ Load and initialise the map rotations
 */
 void G_InitMapRotations()
 {
+	Cmd::AddCommand( "rotationEvalExpr", evalCmd, "eval a map rotation 'if' control expression" );
 	G_LoadMaprotation( "default/maprotation.cfg" );
 	G_LoadMaprotation( "maprotation.cfg" );
 
