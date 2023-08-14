@@ -71,14 +71,15 @@ void BigPlatformComponent::AddCrates(int timeDelta)
 
 void BigPlatformComponent::Place(gentity_t* player, int position)
 {
+	vec3_t hMins;
+	BG_ClassBoundingBox(PCL_HUMAN_NAKED, hMins, nullptr, nullptr, nullptr, nullptr);
 	vec3_t platformMins, platformMaxs;
 	Bounds(platformMins, platformMaxs);
 	float xlerp = position & 1 ? 0.95 : 0.05;
 	float ylerp = position & 2 ? 0.95 : 0.05;
 	glm::vec3 location{ platformMins[0] + xlerp * (platformMaxs[0] - platformMins[0]),
 	                 platformMins[1] + ylerp * (platformMaxs[1] - platformMins[1]),
-	                 platformMaxs[2] - player->r.mins[2] + 3 };
-	//VectorCopy(place, player->s.origin);
+	                 platformMaxs[2] - hMins[2] + 3 };
 	glm::vec3 angles{}; //TODO
 	G_TeleportPlayer(player, location, angles, 0.0f);
 }
@@ -89,8 +90,10 @@ void BigPlatformComponent::ImmobilizePlayers(int)
 		if (players_[i])
 			Place(players_[i].entity, i);
 	}
-	if (countdown_ < 0)
+	if (countdown_ < 0) {
 		GetThinkingComponent().UnregisterActiveThinker();
+		REGISTER_THINKER(CheckWinner, ThinkingComponent::SCHEDULER_BEFORE, 1);
+	}
 }
 
 void BigPlatformComponent::Countdown(int)
@@ -105,6 +108,27 @@ void BigPlatformComponent::Countdown(int)
 		GetThinkingComponent().UnregisterActiveThinker();
 	}
 	--countdown_;
+}
+
+void BigPlatformComponent::CheckWinner(int)
+{
+	std::string message;
+	switch (level.team[TEAM_HUMANS].numAliveClients) {
+	case 0:
+		message = "Tie";
+		break;
+	case 1:
+		ForEntities<HumanClassComponent>([&](Entity& human, HumanClassComponent&) {
+			message = human.oldEnt->client->pers.netname;
+			message += " ^*wins";
+			});
+		break;
+	default:
+		return;
+	}
+	playing_ = false;
+	trap_SendServerCommand(-1, va("cp %s 33", Quote(message.c_str())));
+	GetThinkingComponent().UnregisterActiveThinker();
 }
 
 static void KillBox(gentity_t* ent, vec3_t mins, vec3_t maxs)
@@ -147,9 +171,18 @@ void BigPlatformComponent::CleanUp()
 
 void BigPlatformComponent::StartRound(const std::vector<gentity_t*>& players)
 {
+	if (playing_) {
+		Log::Warn("already playing");
+		return;
+	}
+	playing_ = true;
 	CleanUp();
-	ASSERT_LT(players.size(), MAX_PLAYERS);
+	ASSERT_LE(players.size(), MAX_PLAYERS);
 	for (size_t i = 0; i < players.size(); i++) {
+		Place(players[i], i);
+		Cmd::PushArgs("devteam h");
+		ClientCommand(players[i]->num());
+		Cmd::PopArgs();
 		players[i]->flags |= FL_GODMODE;
 		players_[i] = players[i];
 	}

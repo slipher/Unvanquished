@@ -29,7 +29,9 @@ class BigPlatformComponent: public BigPlatformComponentBase {
 		void Bounds(vec3_t mins, vec3_t maxs);
 		void Place(gentity_t* player, int position);
 		void ImmobilizePlayers(int timeDelta);
+		void CheckWinner(int timeDelta);
 
+		bool playing_ = false;
 		int countdown_;
 		std::array<GentityRef, 4> players_;
 };

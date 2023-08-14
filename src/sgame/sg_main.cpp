@@ -1962,7 +1962,7 @@ void SetUpBashRound()
 	std::vector<gentity_t*> players;
 	ForEntities<ClientComponent>([&](Entity& entity, ClientComponent& client) {
 		if (players.size() == 4) return;
-		if (client.GetTeamComponent().Team() == TEAM_HUMANS)
+		if (entity.oldEnt->client->pers.team == TEAM_HUMANS)
 			players.push_back(entity.oldEnt);
 	});
 	BigPlatformComponent* platform = nullptr;
@@ -1977,27 +1977,6 @@ void SetUpBashRound()
 	bashRound = true;
 }
 
-void CheckBashRules()
-{
-	if (!bashRound) return;
-	std::string message;
-	switch (level.team[TEAM_HUMANS].numAliveClients) {
-	case 0:
-		message = "Tie";
-		break;
-	case 1:
-		ForEntities<HumanClassComponent>([&](Entity& human, HumanClassComponent&) {
-			message = human.oldEnt->client->pers.netname;
-			message += " ^*wins";
-		});
-		break;
-	default:
-		return;
-	}
-	bashRound = false;
-	trap_SendServerCommand(-1, va("cp %s 33", Quote(message.c_str())));
-}
-
 /*
 =================
 CheckExitRules
@@ -2009,7 +1988,6 @@ can see the last frag.
 */
 void CheckExitRules()
 {
-	CheckBashRules();
 	if ( g_cheats && g_neverEnd.Get() ) {
 		return;
 	}
