@@ -4102,6 +4102,8 @@ static void Throw_f( gentity_t *self )
 {
 	if (self->client->ps.weapon != WP_CRATE)
 		return;
+	if ( self->client->ps.weaponTime > 0 )
+		return;
 	glm::vec3 forward;
 	AngleVectors( VEC2GLM( self->client->ps.viewangles ), &forward, nullptr, nullptr );
 	glm::vec3 muzzle = G_CalcMuzzlePoint( self, forward );
