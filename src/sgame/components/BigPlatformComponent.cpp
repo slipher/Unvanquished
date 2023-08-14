@@ -112,21 +112,18 @@ void BigPlatformComponent::Countdown(int)
 
 void BigPlatformComponent::CheckWinner(int)
 {
-	std::string message;
-	switch (level.team[TEAM_HUMANS].numAliveClients) {
-	case 0:
-		message = "Tie";
-		break;
-	case 1:
-		ForEntities<HumanClassComponent>([&](Entity& human, HumanClassComponent&) {
-			message = human.oldEnt->client->pers.netname;
-			message += " ^*wins";
-			});
-		break;
-	default:
-		return;
+	gentity_t* winner = nullptr;
+	for (GentityRef player : players_) {
+		if (player) {
+			if (winner)
+				return;
+			else
+				winner = player.get();
+		}
 	}
+
 	playing_ = false;
+	std::string message = winner ? Str::Format("%s ^*wins", winner->client->pers.netname) : "Tie";
 	trap_SendServerCommand(-1, va("cp %s 33", Quote(message.c_str())));
 	GetThinkingComponent().UnregisterActiveThinker();
 }
