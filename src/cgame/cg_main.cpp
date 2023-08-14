@@ -92,7 +92,7 @@ Cvar::Cvar<bool> cg_mirrorgun("cg_mirrorgun", "use left-handed gun", Cvar::NONE,
 Cvar::Range<Cvar::Cvar<float>> cg_tracerChance("cg_tracerchance", "probability to draw line on bullet trajectory", Cvar::CHEAT, 1.0f, 0.0f, 1.0f);
 Cvar::Cvar<float> cg_tracerWidth("cg_tracerwidth", "width of line on bullet trajectory", Cvar::CHEAT, 3);
 Cvar::Cvar<float> cg_tracerLength("cg_tracerlength", "length of line drawn on bullet trajectory", Cvar::CHEAT, 200);
-Cvar::Cvar<bool> cg_thirdPerson("cg_thirdPerson", "show own player from 3rd-person perspective", Cvar::CHEAT, false);
+Cvar::Cvar<bool> cg_thirdPerson("cg_thirdPerson", "show own player from 3rd-person perspective", Cvar::CHEAT, true);
 Cvar::Cvar<float> cg_thirdPersonAngle("cg_thirdPersonAngle", "yaw angle for 3rd-person view", Cvar::CHEAT, 0);
 Cvar::Range<Cvar::Cvar<int>> cg_thirdPersonShoulderViewMode("cg_thirdPersonShoulderViewMode", "alternative chase cam position", Cvar::NONE, 1, 1, 2);
 Cvar::Cvar<bool> cg_staticDeathCam("cg_staticDeathCam", "don't follow attacker movements after death", Cvar::NONE, false);
