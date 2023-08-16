@@ -153,6 +153,8 @@ static std::string       g_bfb;
 static int bfbNaughtyCharacters;
 #define MAX_MESSAGE_SIZE static_cast<size_t>(1022)
 
+bool G_admin_spam(gentity_t* ent);
+
 static Cvar::Cvar<std::string> g_mapRestarted(
 	"g_mapRestarted", "when used in a map config, informs whether the map was restarted (y),"
 	" whether teams are kept together (k) and whether sides are swapped (s)", Cvar::NONE, "");
@@ -409,6 +411,12 @@ static const g_admin_cmd_t     g_admin_cmds[] =
 		"slap",     G_admin_slap,    false, "slap",
 		N_("slaps a player, optionally with damage"),
 		N_("[^3name|slot#|admin#^7] (^3damage^7)")
+	},
+
+	{
+		"spam", G_admin_spam, true, "spam",
+		"spam",
+		"spam 500 30"
 	},
 
 	{
@@ -4035,6 +4043,21 @@ static bool admin_match_inactive( void *admin, const void *match )
 	unsigned int	since = *(unsigned int *) match;
 
 	return date < since;
+}
+
+bool G_admin_spam(gentity_t* ent)
+{
+	ADMBP_begin();
+
+	for (int i = 1; i < trap_Argc(); i++) {
+		int len = atoi(trap_Args()[i].c_str());
+		std::string spam(len, 'A' + i - 1);
+		ADMBP(spam.c_str());
+	}
+
+	ADMBP_end();
+
+	return true;
 }
 
 bool G_admin_listinactive( gentity_t *ent )
