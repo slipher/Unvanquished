@@ -68,7 +68,7 @@ void G_BotUpdateObstacles();
 std::string G_BotToString( gentity_t *bot );
 std::string G_BotBehaviorToString( Str::StringRef behavior );
 
-const char BOT_DEFAULT_BEHAVIOR[] = "default";
+const char BOT_DEFAULT_BEHAVIOR[] = "bash";
 const char BOT_NAME_FROM_LIST[] = "*";
 
 #endif
