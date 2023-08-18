@@ -561,7 +561,7 @@ static void Cmd_Devteam_f( gentity_t *ent )
 		case TEAM_HUMANS:
 			G_LeaveTeam( ent );
 			ent->client->pers.team = TEAM_HUMANS;
-			ent->client->pers.humanItemSelection = WP_HBUILD;
+			ent->client->pers.humanItemSelection = WP_HANDS;
 			ent->client->pers.classSelection = PCL_HUMAN_NAKED;
 			ent->client->ps.stats[ STAT_CLASS ] = PCL_HUMAN_NAKED;
 			break;
