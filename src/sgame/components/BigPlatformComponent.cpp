@@ -5,6 +5,8 @@
 
 #define MAX_PLAYERS 4
 
+static Cvar::Cvar<int> crateInterval("bash_crateInterval", "interval in ms for adding crates", Cvar::NONE, 1000);
+
 static void UseCrate(gentity_t* crate, gentity_t* player, gentity_t*)
 {
 	if (player->client->ps.weapon == WP_CRATE)
@@ -16,7 +18,7 @@ static void UseCrate(gentity_t* crate, gentity_t* player, gentity_t*)
 BigPlatformComponent::BigPlatformComponent(Entity& entity, HumanBuildableComponent& r_HumanBuildableComponent)
 	: BigPlatformComponentBase(entity, r_HumanBuildableComponent)
 {
-	REGISTER_THINKER(AddCrates, ThinkingComponent::SCHEDULER_AVERAGE, 1000);
+	REGISTER_THINKER(AddCrates, ThinkingComponent::SCHEDULER_AVERAGE, crateInterval.Get());
 }
 
 static gentity_t *SpawnDumbMissileRestingCrate( missile_t missile, gentity_t *parent, const glm::vec3 &start, const glm::vec3 &dir )
