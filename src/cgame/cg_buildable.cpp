@@ -144,6 +144,7 @@ static const struct { shorthand_t shorthand; int flags; } anims[ BA_NUM_BUILDABL
 {{XX,0},{I1,1},{I2,1},{PD,0},{DD,1},{C1,0},{I1,0},{A1,0},{C2,0},{XX,0},{XX,0},{XX,0},{XX,0},{DE,0},{DU,0},{DD,0},{XX,0}}, // H_MEDISTAT
 {{XX,0},{I1,1},{XX,0},{I1,1},{I1,1},{I1,1},{I1,1},{XX,0},{XX,0},{XX,0},{XX,0},{XX,0},{XX,0},{I1,0},{I1,0},{I1,0},{XX,0}}, // H_DRILL
 {{XX,0},{I1,1},{XX,0},{XX,0},{I1,1},{C1,0},{XX,0},{XX,0},{XX,0},{XX,0},{XX,0},{XX,0},{XX,0},{DE,0},{XX,0},{DD,0},{XX,0}}, // H_REACTOR
+{{XX,0},{I1,1},{I2,1},{PD,0},{DD,1},{C1,0},{I1,0},{A1,0},{C2,0},{XX,0},{XX,0},{XX,0},{XX,0},{DE,0},{DU,0},{DD,0},{XX,0}}, // H_BIGPLATFORM
 };
 
 static const char *GetAnimationName( buildable_t buildable, buildableAnimNumber_t animNumber )
@@ -626,6 +627,9 @@ void CG_InitBuildables()
 
 		buildableName = BG_Buildable( buildable )->name;
 
+		if ( buildable == BA_H_BIGPLATFORM )
+			buildableName = "medistat";
+
 		// FIXME: md5 means it's a skeletal model, it can also be in iqm format.
 		bi->md5 = false;
 
@@ -655,7 +659,7 @@ void CG_InitBuildables()
 		// If no skeletal model found, register an md3 model instead.
 		if ( !bi->md5 )
 		{
-			bi->md5 = buildable == BA_H_BIGPLATFORM;
+			iqm = bi->md5 = buildable == BA_H_BIGPLATFORM;
 
 			for ( j = 0; j < MAX_BUILDABLE_MODELS; j++ )
 			{
