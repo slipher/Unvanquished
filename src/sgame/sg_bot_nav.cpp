@@ -204,6 +204,13 @@ void G_BotNavInit( int generateNeeded )
 
 	for ( class_t i : RequiredNavmeshes( g_bot_navmeshReduceTypes.Get() ) )
 	{
+		// never use cache
+		if ( generateNeeded )
+		{
+			missing[ i ] = true;
+			continue;
+		}
+
 		switch ( G_BotSetupNav( config, i ) )
 		{
 		case navMeshStatus_t::UNINITIALIZED:

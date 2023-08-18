@@ -236,31 +236,9 @@ struct LinearAllocator : public dtTileCacheAlloc
 // Maybe use another alien form's navmesh instead of generating one for this class
 inline class_t NavmeshForClass( class_t species, bool reduceTypes )
 {
-	switch ( species )
-	{
-	// Naked, Light, and Medium human forms are truly identical.
-	// Battlesuit is taller, but otherwise the same.
-	case PCL_HUMAN_NAKED:
-	case PCL_HUMAN_LIGHT:
-	case PCL_HUMAN_MEDIUM:
-		return reduceTypes ? PCL_HUMAN_BSUIT : PCL_HUMAN_NAKED;
-
-	// Grangers are the same size, but the advanced one can jump higher and if you provide
-	// navcons its wallwalk may be exploited
-	case PCL_ALIEN_BUILDER0_UPG:
-		return reduceTypes ? PCL_ALIEN_BUILDER0 : PCL_ALIEN_BUILDER0_UPG;
-
-	// Mantis is the same size as dretch but can jump higher
-	case PCL_ALIEN_LEVEL1:
-		return reduceTypes ? PCL_ALIEN_LEVEL0 : PCL_ALIEN_LEVEL1;
-
-	// Marauder is slightly smaller than Advanced Marauder, otherwise the same
-	case PCL_ALIEN_LEVEL2:
-		return reduceTypes ? PCL_ALIEN_LEVEL2_UPG : PCL_ALIEN_LEVEL2;
-
-	default:
-		return species;
-	}
+	Q_UNUSED(species);
+	Q_UNUSED(reduceTypes);
+	return PCL_HUMAN_NAKED;
 }
 
 inline std::vector<class_t> RequiredNavmeshes( bool reduceTypes )
@@ -285,7 +263,7 @@ inline std::vector<class_t> RequiredNavmeshes( bool reduceTypes )
 
 inline std::string NavmeshFilename(Str::StringRef mapName, class_t species)
 {
-	return Str::Format("maps/%s-%s.navMesh", mapName, BG_Class(species)->name);
+	return Str::Format("bash/trash/%s-%s.navMesh", mapName, species);
 }
 
 #endif // SHARED_BOT_NAV_SHARED_H_

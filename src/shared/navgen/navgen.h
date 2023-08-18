@@ -183,6 +183,7 @@ private:
 	// in principle mapName could be different from the current map, if the necessary pak is loaded
 	void LoadMap(Str::StringRef mapName);
 
+	void LoadPlatforms();
 	void WriteFile(const NavgenTask& t);
 
 public:

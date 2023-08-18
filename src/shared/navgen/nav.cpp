@@ -39,6 +39,7 @@
 #include "common/FileSystem.h"
 #include "shared/bg_gameplay.h"
 #include "sgame/botlib/bot_convert.h"
+#include "sgame/CBSE.h"
 #include "navgen.h"
 
 // disable suppression in case multiple threads finishing together lead to a burst of output
@@ -514,6 +515,31 @@ void NavmeshGenerator::LoadGeometry()
 
 	LOG.Debug( "Recast world bounds: min (%.0f %.0f %.0f) max (%.0f %.0f %.0f)",
 	           mins[0], mins[1], mins[2], maxs[0], maxs[1], maxs[2] );
+}
+
+void NavmeshGenerator::LoadPlatforms()
+{
+	std::vector<float> verts;
+	std::vector<int> tris;
+
+	ForEntities<BigPlatformComponent>([&](Entity&, BigPlatformComponent& platform) {
+		vec3_t mins, maxs;
+		platform.Bounds(mins, maxs);
+		int idxBase = int(verts.size()) / 3;
+		auto V = [&verts](int x, int y, int z) {
+			verts.push_back(x);
+			verts.push_back(z);
+			verts.push_back(y);
+		};
+		V(mins[0], mins[1], maxs[2]);
+		V(mins[0], maxs[1], maxs[2]);
+		V(maxs[0], maxs[1], maxs[2]);
+		V(maxs[0], mins[1], maxs[2]);
+		tris.push_back(idxBase); tris.push_back(idxBase + 1); tris.push_back(idxBase + 2);
+		tris.push_back(idxBase); tris.push_back(idxBase + 2); tris.push_back(idxBase + 3);
+	});
+
+	geo_.init(verts.data(), verts.size() / 3, tris.data(), tris.size() / 3);
 }
 
 // Modified version of Recast's rcErodeWalkableArea that uses an AABB instead of a cylindrical radius
@@ -1174,8 +1200,7 @@ void NavmeshGenerator::LoadMap(Str::StringRef mapName)
 	config_ = ReadNavgenConfig( mapName );
 	mapName_ = mapName;
 	initStatus_ = {};
-	LoadBSP();
-	LoadGeometry();
+	LoadPlatforms();
 	if ( initStatus_.code != NavgenStatus::OK ) return;
 
 	cellHeight_ = config_.requestedCellHeight;

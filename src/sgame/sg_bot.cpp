@@ -32,7 +32,7 @@ Cvar::Modified<Cvar::Cvar<int>> g_bot_defaultFill("g_bot_defaultFill", "fills bo
 static Cvar::Range<Cvar::Cvar<int>> generateNeededMesh(
 	"g_bot_navgen_onDemand",
 	"automatically generate navmeshes when a bot is added (1 = in background, -1 = blocking)",
-	Cvar::NONE, 1, -1, 1);
+	Cvar::NONE, -1, -1, 1);
 static Cvar::Cvar<int> traceClient(
 	"g_bot_traceClient", "show running BT node for this client num", Cvar::NONE, -1);
 

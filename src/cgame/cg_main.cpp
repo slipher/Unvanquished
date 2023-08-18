@@ -1118,6 +1118,7 @@ bool CG_ClientIsReady( int clientNum )
 // is not set up to handle long loading times in the sgame.
 static void GenerateNavmeshes()
 {
+#if 0
 	std::string mapName = Cvar::GetValue( "mapname" );
 	std::bitset<PCL_NUM_CLASSES> missing;
 	NavgenConfig config = ReadNavgenConfig( mapName );
@@ -1168,6 +1169,7 @@ static void GenerateNavmeshes()
 	} );
 
 	cg.loadingNavmesh = false;
+#endif
 }
 
 static void SetMapInfoFromArenaInfo( arenaInfo_t arenaInfo )
