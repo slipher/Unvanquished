@@ -19,6 +19,7 @@ BigPlatformComponent::BigPlatformComponent(Entity& entity, HumanBuildableCompone
 	: BigPlatformComponentBase(entity, r_HumanBuildableComponent)
 {
 	REGISTER_THINKER(AddCrates, ThinkingComponent::SCHEDULER_AVERAGE, crateInterval.Get());
+	entity.oldEnt->flags |= FL_GODMODE;
 }
 
 static gentity_t *SpawnDumbMissileRestingCrate( missile_t missile, gentity_t *parent, const glm::vec3 &start, const glm::vec3 &dir )
