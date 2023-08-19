@@ -542,7 +542,7 @@ Cmd_Devteam_f
 Change team and spawn as builder at the current position
 ==================
 */
-static void Cmd_Devteam_f( gentity_t *ent )
+void Cmd_Devteam_f( gentity_t *ent )
 {
 	if ( trap_Argc() < 2 )
 	{

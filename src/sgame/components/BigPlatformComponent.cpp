@@ -169,6 +169,7 @@ void BigPlatformComponent::CleanUp()
 	KillBox(entity.oldEnt, platformMins, platformMaxs);
 }
 
+void Cmd_Devteam_f(gentity_t* ent);
 void BigPlatformComponent::StartRound(const std::vector<gentity_t*>& players)
 {
 	if (playing_) {
@@ -181,7 +182,7 @@ void BigPlatformComponent::StartRound(const std::vector<gentity_t*>& players)
 	for (size_t i = 0; i < players.size(); i++) {
 		Place(players[i], i);
 		Cmd::PushArgs("devteam h");
-		ClientCommand(players[i]->num());
+		Cmd_Devteam_f(players[i]);
 		Cmd::PopArgs();
 		players[i]->flags |= FL_GODMODE;
 		players_[i] = players[i];
