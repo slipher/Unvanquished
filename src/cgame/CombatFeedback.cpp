@@ -47,7 +47,7 @@ Cvar::Cvar<float> damageIndicators_scale(
 Cvar::Cvar<bool> killSounds_enable(
 	"cgame.killSounds.enable",
 	"enable/disable kill sounds",
-	Cvar::NONE, true);
+	Cvar::NONE, false);
 
 enum damageIndicatorLayer_t {
 	DIL_ENEMY,
