@@ -3856,7 +3856,7 @@ static void PM_Weapon()
 		     ( BG_Weapon( pm->ps->weapon )->hasAltMode && attack2 ) ||
 		     ( BG_Weapon( pm->ps->weapon )->hasThirdMode && attack3 ) )
 		{
-			PM_AddEvent( EV_NOAMMO );
+			//PM_AddEvent( EV_NOAMMO );
 			pm->ps->weaponTime += 500;
 		}
 
