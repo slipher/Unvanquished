@@ -4098,25 +4098,6 @@ static void Cmd_Damage_f( gentity_t *ent )
 	                    nonloc ? DAMAGE_NO_LOCDAMAGE : 0, MOD_TARGET_LASER);
 }
 
-static void Throw_f( gentity_t *self )
-{
-	if (self->client->ps.weapon != WP_CRATE)
-		return;
-	if ( self->client->ps.weaponTime > 0 )
-		return;
-	glm::vec3 forward;
-	AngleVectors( VEC2GLM( self->client->ps.viewangles ), &forward, nullptr, nullptr );
-	glm::vec3 muzzle = G_CalcMuzzlePoint( self, forward );
-	glm::vec3 dir = forward;
-	if (dir[0] == 0.0f && dir[1] == 0.0f) dir[2] = 1.0f;
-	dir[2] = 0.0f;
-	VectorNormalize(dir);
-	dir[2] = 0.5f;
-	VectorNormalize(dir);
-	G_SpawnDumbMissile( MIS_CRATE, self, muzzle, dir );
-	G_ForceWeaponChange(self, WP_HANDS);
-}
-
 /*
 =================
 Cmd_Beacon_f
@@ -4344,7 +4325,6 @@ static const commands_t cmds[] =
 	{ "team",            0,                                   Cmd_Team_f             },
 	{ "teamstatus",      CMD_TEAM,                            Cmd_TeamStatus_f       },
 	{ "teamvote",        CMD_TEAM | CMD_INTERMISSION,         Cmd_Vote_f             },
-	{ "throw",           CMD_TEAM | CMD_ALIVE,                Throw_f                },
 	{ "unignore",        0,                                   Cmd_Ignore_f           },
 	{ "vote",            CMD_INTERMISSION,                    Cmd_Vote_f             },
 	{ "vsay",            CMD_MESSAGE | CMD_INTERMISSION,      Cmd_VSay_f             },
