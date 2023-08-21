@@ -37,6 +37,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <common/FileSystem.h>
 #include "Entities.h"
 #include "CBSE.h"
+#include "sg_bot_util.h"
 #include "sg_votes.h"
 
 #define CMD_CHEAT        0x0001
@@ -569,6 +570,9 @@ void Cmd_Devteam_f( gentity_t *ent )
 			ADMP( "\"" N_("usage: devteam [a|h]") "\"" );
 			return;
 	}
+
+	if ( ent->r.svFlags & SVF_BOT )
+		G_BotSetNavMesh( ent );
 
 	ent->client->pers.teamChangeTime = level.time;
 	ent->client->pers.teamInfo = level.startTime - 1;
