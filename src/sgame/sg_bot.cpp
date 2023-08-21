@@ -437,6 +437,15 @@ void G_BotThink( gentity_t *self )
 	//MUST be done
 	while ( trap_BotGetServerCommand( self->num(), buf, sizeof( buf ) ) );
 
+	//hacky ping fix
+	self->client->ps.ping = rand() % 50 + 50;
+
+	if ( self->flags & FL_GODMODE )
+	{
+		// immobilized at beginning of round
+		return;
+	}
+
 	BotSearchForEnemy( self );
 
 	// Populate transient caches
@@ -449,9 +458,6 @@ void G_BotThink( gentity_t *self )
 	{
 		G_AddCreditToClient( self->client, HUMAN_MAX_CREDITS, true );
 	}
-
-	//hacky ping fix
-	self->client->ps.ping = rand() % 50 + 50;
 
 	//reset the user specified client number if the client disconnected
 	if ( self->botMind->userSpecifiedClientNum )

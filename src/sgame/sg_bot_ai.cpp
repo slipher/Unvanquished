@@ -1636,6 +1636,10 @@ AINodeStatus_t BotActionGetCrate( gentity_t *self, AIGenericNode_t* node )
 		}
 		self->botMind->currentNode = node;
 	}
+	else if ( !self->botMind->goal.targetsValidEntity() )
+	{
+		return STATUS_FAILURE;
+	}
 
 	if ( ( level.time + self->num() * 37 % 64 * 400 / 63 ) % 400 < 100 )
 		usercmdPressButton( self->botMind->cmdBuffer.buttons, BTN_ACTIVATE );
