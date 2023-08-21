@@ -1593,8 +1593,6 @@ bool BG_InventoryContainsWeapon( int weapon, const int stats[] )
 		return true;
 	}
 
-	if (weapon == WP_CRATE || weapon == WP_HANDS) return true;
-
 	return ( stats[ STAT_WEAPON ] == weapon );
 }
 

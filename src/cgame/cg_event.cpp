@@ -1011,7 +1011,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position )
 			break;
 
 		case EV_CHANGE_WEAPON:
-			trap_S_StartSound( nullptr, es->number, soundChannel_t::CHAN_AUTO, cgs.media.selectSound );
+			//trap_S_StartSound( nullptr, es->number, soundChannel_t::CHAN_AUTO, cgs.media.selectSound );
 			break;
 
 		case EV_FIRE_WEAPON:

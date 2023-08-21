@@ -11,6 +11,7 @@ static void UseCrate(gentity_t* crate, gentity_t* player, gentity_t*)
 {
 	if (player->client->ps.weapon == WP_CRATE)
 		return;
+	player->client->ps.stats[ STAT_WEAPON ] = WP_CRATE;
 	G_ForceWeaponChange( player, WP_CRATE );
 	G_FreeEntity(crate);
 }

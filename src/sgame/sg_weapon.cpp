@@ -1450,6 +1450,7 @@ static void ThrowCrate(gentity_t* self)
 	dir[2] = 0.5f;
 	dir = glm::normalize(dir);
 	G_SpawnDumbMissile( MIS_CRATE, self, muzzle, dir );
+	self->client->ps.stats[STAT_WEAPON] = WP_HANDS;
 	G_ForceWeaponChange(self, WP_HANDS);
 }
 
