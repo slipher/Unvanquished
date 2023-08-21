@@ -1607,6 +1607,50 @@ AINodeStatus_t BotActionResetStuckTime( gentity_t *self, AIGenericNode_t* )
 	return AINodeStatus_t::STATUS_SUCCESS;
 }
 
+AINodeStatus_t BotActionGetCrate( gentity_t *self, AIGenericNode_t* node )
+{
+	if ( self->client->ps.weapon == WP_CRATE )
+	{
+		return STATUS_SUCCESS;
+	}
+
+	if ( node != self->botMind->currentNode )
+	{
+		gentity_t *best = nullptr;
+		float dist = std::numeric_limits<float>::max();
+
+		ForEntities<RestingCrateComponent>([&](Entity& crate, RestingCrateComponent&) {
+			float d = G_Distance( self, crate.oldEnt );
+			if ( d < dist )
+			{
+				dist = d;
+				best = crate.oldEnt;
+			}
+		});
+
+		botTarget_t target;
+		target = best;
+		if ( !BotChangeGoal( self, target ) )
+		{
+			return STATUS_FAILURE;
+		}
+		self->botMind->currentNode = node;
+	}
+
+	if ( ( level.time + self->num() * 37 % 64 * 400 / 63 ) % 400 < 100 )
+		usercmdPressButton( self->botMind->cmdBuffer.buttons, BTN_ACTIVATE );
+
+	if ( !GoalInRange( self, 50 ) ) //TODO magic number
+	{
+		return BotMoveToGoal( self ) ? STATUS_RUNNING : STATUS_FAILURE;
+	}
+
+	BotAimAtEnemy( self );
+
+	return STATUS_RUNNING;
+
+}
+
 AINodeStatus_t BotActionGesture( gentity_t *self, AIGenericNode_t* )
 {
 	usercmd_t *botCmdBuffer = &self->botMind->cmdBuffer;

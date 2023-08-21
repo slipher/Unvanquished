@@ -283,6 +283,7 @@ AINodeStatus_t BotActionSuicide( gentity_t *self, AIGenericNode_t *node );
 AINodeStatus_t BotActionJump( gentity_t *self, AIGenericNode_t *node );
 AINodeStatus_t BotActionResetStuckTime( gentity_t *self, AIGenericNode_t *node );
 AINodeStatus_t BotActionGesture( gentity_t *self, AIGenericNode_t* );
+AINodeStatus_t BotActionGetCrate( gentity_t *self, AIGenericNode_t* );
 AINodeStatus_t BotActionStayHere( gentity_t *self, AIGenericNode_t* );
 AINodeStatus_t BotActionFollow( gentity_t *self, AIGenericNode_t* );
 AINodeStatus_t BotActionBuildNowChosenBuildable( gentity_t *self, AIGenericNode_t *node );

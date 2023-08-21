@@ -1124,6 +1124,7 @@ static const struct AIActionMap_s
 	{ "flee",              BotActionFlee,              0, 0 },
 	{ "follow",            BotActionFollow,            1, 1 },
 	{ "gesture",           BotActionGesture,           0, 0 },
+	{ "getCrate",          BotActionGetCrate,          0, 0 },
 	{ "heal",              BotActionHeal,              0, 0 },
 	{ "jump",              BotActionJump,              0, 0 },
 	{ "moveInDir",         BotActionMoveInDir,         1, 2 },
@@ -1550,6 +1551,7 @@ static void SetBehaviorTreeDefines()
 	D( WP_HBUILD );
 	D( WP_ABUILD );
 	D( WP_ABUILD2 );
+	D( WP_CRATE );
 
 	// add teams
 	D( TEAM_ALIENS );
