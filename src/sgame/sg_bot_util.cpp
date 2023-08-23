@@ -953,6 +953,7 @@ static float BotAimAngle( gentity_t *self, const glm::vec3 &pos )
 
 gentity_t* BotFindBestEnemy( gentity_t *self )
 {
+#if 0
 	float bestVisibleEnemyScore = 0.0f;
 	float bestInvisibleEnemyScore = 0.0f;
 	gentity_t *bestVisibleEnemy = nullptr;
@@ -1010,6 +1011,19 @@ gentity_t* BotFindBestEnemy( gentity_t *self )
 	{
 		return bestInvisibleEnemy;
 	}
+#endif
+	gentity_t *best = 0;
+	float dist = std::numeric_limits<float>::max();
+	ForEntities<HumanClassComponent>([&](Entity& hum, HumanClassComponent&) {
+		if ( hum.oldEnt == self || Entities::IsDead( hum ) ) return;
+		float d = G_Distance( self, hum.oldEnt );
+		if ( d < dist )
+		{
+			dist = d;
+			best = hum.oldEnt;
+		}
+	});
+	return best;
 }
 
 gentity_t* BotFindClosestEnemy( gentity_t *self )
@@ -1229,7 +1243,7 @@ void BotTargetToRouteTarget( const gentity_t *self, botTarget_t target, botRoute
 		glm::vec3 targetPos = target.getPos();
 		glm::vec3 end = targetPos + 600.f * invNormal;
 		trap_Trace( &trace, targetPos, mins, maxs, end, target.getTargetedEntity()->num(),
-		            CONTENTS_SOLID | CONTENTS_PLAYERCLIP, MASK_ENTITY );
+		            MASK_PLAYERSOLID, MASK_ENTITY );
 		routeTarget->setPos( VEC2GLM( trace.endpos ) );
 	}
 
@@ -2606,7 +2620,7 @@ void BotSearchForEnemy( gentity_t *self )
 	do
 	{
 		enemy = BotPopEnemy( queue );
-	} while ( enemy && !BotEntityIsValidEnemyTarget( self, enemy ) );
+	} while ( enemy && !BotEntityIsValidTarget( enemy ) );
 
 	self->botMind->bestEnemy.ent = enemy;
 

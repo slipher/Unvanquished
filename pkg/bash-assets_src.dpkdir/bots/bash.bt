@@ -4,5 +4,6 @@ selector
 	{
 		action getCrate
 	}
+	action fightWithCrate
 	action roam
 }

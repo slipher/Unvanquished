@@ -34,11 +34,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 //NOTE: kept as constant to let compiler optimise Square( MAX_HUMAN_DANCE_DIST );
 //how far away we can be before we stop going forward when fighting an alien
-constexpr float MAX_HUMAN_DANCE_DIST = 300.0f;
+constexpr float MAX_HUMAN_DANCE_DIST = 40.0f;
 
 //NOTE: kept as constant to let compiler optimise Square( MIN_HUMAN_DANCE_DIST );
 //how far away we can be before we try to go around an alien when fighting an alien
-constexpr float MIN_HUMAN_DANCE_DIST = 100.0f;
+constexpr float MIN_HUMAN_DANCE_DIST = 20.0f;
 
 /*
 ======================
@@ -911,6 +911,120 @@ static void BotActivateJetpack( gentity_t *self, int fuelLimit )
 	self->botMind->cmdBuffer.upmove = 127;
 }
 
+static bool AimingAtEnemy( gentity_t *self, gentity_t *enemy )
+{
+	glm::vec3 forward, right, up;
+	AngleVectors(VEC2GLM(self->client->ps.viewangles), &forward, &right, &up);
+	forward.z = 0.001f;
+	forward = normalize(forward);
+	trace_t trace;
+	auto start = VEC2GLM(self->s.origin);
+	start.z += self->r.maxs[2];
+	glm::vec3 end = start + 150.f * forward;
+	vec3_t mins{ -40, -40, -20 }; // needs to avoid hitting ground crates
+	vec3_t maxs{ 40, 40, 60 };
+	trap_Trace(&trace, &start[0], mins, maxs, &end[0], self->num(), MASK_SHOT, 0);
+	if (g_entities[trace.entityNum].client)
+		return true;
+	// try reverse direction to work around https://github.com/DaemonEngine/Daemon/issues/926
+	trap_Trace(&trace, &end[0], mins, maxs, &start[0], self->num(), MASK_SHOT, 0);
+	if (g_entities[trace.entityNum].client)
+	{
+		return true;
+	}
+	return false;
+}
+
+static Cvar::Cvar<float> crateRange("bash_crateAttackRange", "max enemy distance for bots to throw crate", Cvar::NONE, 90);
+AINodeStatus_t BotActionFightWithCrate(gentity_t* self, AIGenericNode_t* node)
+{
+	if ( self->client->ps.weapon != WP_CRATE )
+		return STATUS_FAILURE;
+
+	botMemory_t* mind = self->botMind;
+
+	if (self->botMind->currentNode != node)
+	{
+		if (!BotChangeGoalEntity(self, self->botMind->bestEnemy.ent))
+		{
+			return STATUS_FAILURE;
+		}
+
+		self->botMind->currentNode = node;
+		self->botMind->enemyLastSeen = level.time;
+		return STATUS_RUNNING;
+	}
+
+	// we killed it, yay!
+	if (!mind->goal.targetsValidEntity())
+	{
+		return STATUS_SUCCESS;
+	}
+
+	if (!mind->nav().havePath)
+	{
+		return STATUS_FAILURE;
+	}
+
+	// The target is visible, and on the navmesh
+
+	bool inAttackRange = DistanceToGoalSquared( self ) < Square( crateRange.Get() );
+	self->botMind->enemyLastSeen = level.time;
+
+	if (!inAttackRange && !mind->nav().directPathToGoal)
+	{
+		BotMoveToGoal(self);
+		return STATUS_RUNNING;
+	}
+
+	// We have a visible target for which we haven't got a
+	// direct navmesh path and we are not at at weapon range (if human)
+
+	BotAimAtEnemy(self);
+
+	if (!inAttackRange)
+	{
+		BotMoveInDir(self, MOVE_FORWARD);
+		BotSprint(self, true);
+	}
+
+	if (inAttackRange && AimingAtEnemy(self, const_cast<gentity_t*>(mind->goal.getTargetedEntity())))
+	{
+		BotFireWeaponAI(self);
+		return STATUS_SUCCESS;
+	}
+
+	// We are human and we either are at fire range, or have
+	// a direct path to goal
+
+#if 0
+	if (self->botMind->skillLevel >= 3 && DistanceToGoalSquared(self) < Square(MAX_HUMAN_DANCE_DIST)
+		&& (DistanceToGoalSquared(self) > Square(MIN_HUMAN_DANCE_DIST) || self->botMind->skillLevel < 5))
+	{
+		BotMoveInDir(self, MOVE_BACKWARD);
+	}
+	else if (DistanceToGoalSquared(self) <= Square(MIN_HUMAN_DANCE_DIST)) //we wont hit this if skill < 5
+	{
+		// We will be moving toward enemy, strafing to
+		// the result: we go around the enemy
+		BotAlternateStrafe(self);
+	}
+	else if (DistanceToGoalSquared(self) >= Square(MAX_HUMAN_DANCE_DIST) && self->client->ps.weapon != WP_PAIN_SAW)
+	{
+		if (DistanceToGoalSquared(self) - Square(MAX_HUMAN_DANCE_DIST) < 100)
+		{
+			BotStandStill(self);
+		}
+		else
+		{
+			BotStrafeDodge(self);
+		}
+	}
+#endif
+
+	return STATUS_RUNNING;
+}
+
 // TODO: Move decision making out of these actions and into the rest of the behavior tree
 AINodeStatus_t BotActionFight( gentity_t *self, AIGenericNode_t *node )
 {
@@ -1620,6 +1734,7 @@ AINodeStatus_t BotActionGetCrate( gentity_t *self, AIGenericNode_t* node )
 		float dist = std::numeric_limits<float>::max();
 
 		ForEntities<RestingCrateComponent>([&](Entity& crate, RestingCrateComponent&) {
+			if (Entities::IsDead(crate)) return;
 			float d = G_Distance( self, crate.oldEnt );
 			if ( d < dist )
 			{

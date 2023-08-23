@@ -1120,6 +1120,7 @@ static const struct AIActionMap_s
 	{ "evolveTo",          BotActionEvolveTo,          1, 1 },
 	{ "extinguishFire",    BotActionExtinguishFire,    0, 0 },
 	{ "fight",             BotActionFight,             0, 0 },
+	{ "fightWithCrate",    BotActionFightWithCrate,    0, 0 },
 	{ "fireWeapon",        BotActionFireWeapon,        0, 0 },
 	{ "flee",              BotActionFlee,              0, 0 },
 	{ "follow",            BotActionFollow,            1, 1 },
