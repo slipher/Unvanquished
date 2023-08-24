@@ -1585,6 +1585,7 @@ Does the player hold a weapon?
 */
 bool BG_InventoryContainsWeapon( int weapon, const int stats[] )
 {
+#if 0
 	// humans always have a blaster
 	// HACK: Determine team by checking for STAT_CLASS since we merged STAT_TEAM into PERS_TEAM
 	//       This hack will vanish as soon as the blast isn't the only possible sidearm weapon anymore
@@ -1592,6 +1593,7 @@ bool BG_InventoryContainsWeapon( int weapon, const int stats[] )
 	{
 		return true;
 	}
+#endif
 
 	return ( stats[ STAT_WEAPON ] == weapon );
 }
