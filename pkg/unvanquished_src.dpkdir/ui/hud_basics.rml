@@ -184,13 +184,11 @@
 		<div id="minimapbox">
 			<if cvar="cg_minimapActive" condition="==" value="1">
 				<if cvar="cg_drawMinimap" condition="==" value="1">
-					<minimap />
 				</if>
 			</if>
 		</div>
 
 		<div id="statsbox">
-			<location />
 
 			<if cvar="cg_drawTimer" condition="==" value="1">
 				<stat><translate>Game</translate>&nbsp;<timer /></stat>

@@ -1635,7 +1635,7 @@ void ClientSpawn( gentity_t *ent, gentity_t *spawn, const vec3_t origin, const v
 	// clear entity values
 	if ( ent->client->pers.classSelection == PCL_HUMAN_NAKED )
 	{
-		BG_AddUpgradeToInventory( UP_MEDKIT, client->ps.stats );
+		//BG_AddUpgradeToInventory( UP_MEDKIT, client->ps.stats );
 		weapon = client->pers.humanItemSelection;
 	}
 	else if ( willBeAlive )

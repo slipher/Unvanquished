@@ -257,16 +257,16 @@
 	<body id="hud_human">
 	<div id="setfont">
 		<div id="hudbg">
-			<img id="right" src="/ui/assets/human/rightbg"/>
 			<img id="left" src="/ui/assets/human/leftbg"/>
 		</div>
+<!--
 		<div id="gunstuff">
 			<div class="ammo"><weapon_icon/><ammo/><ammo_stack/></div>
 			<div class="clips"><img class="clip" src="/ui/assets/human/clip"/>
 			<clips/><clip_stack/></div>
-			<!-- FIXME: We may want to include <credits/> in the translatable string. -->
 			<div class="credits"><credits/>&nbsp;<translate>Credits</translate></div>
 		</div>
+-->
 		<div id="bars">
 			<stamina>
 				<img class="run" src="/ui/assets/human/run"/>
@@ -278,8 +278,6 @@
 			<progress class="health" src="health" /></div>
 		</div>
 		<div id="momentum">
-			<unlocked_items/>
-			<momentum_bar/>
 		</div>
 		<div id="items">
 			<usable_buildable>
