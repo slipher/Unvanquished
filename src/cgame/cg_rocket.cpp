@@ -349,7 +349,7 @@ void CG_Rocket_LoadHuds()
 		if ( !Q_stricmp( token, "human.hudgroup" ) )
 		{
 			// Clear old values
-			for ( i = WP_BLASTER; i <= WP_LUCIFER_CANNON; ++i )
+			for ( i = WP_BLASTER; i < WP_ABUILD; ++i )
 			{
 				Rocket_ClearHud( i );
 			}
@@ -376,7 +376,7 @@ void CG_Rocket_LoadHuds()
 				}
 
 
-				for ( i = WP_BLASTER; i <= WP_LUCIFER_CANNON; ++i )
+				for ( i = WP_BLASTER; i < WP_ABUILD; ++i )
 				{
 					Rocket_AddUnitToHud( i, token );
 				}
