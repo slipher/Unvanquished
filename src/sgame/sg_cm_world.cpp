@@ -759,7 +759,7 @@ static void G_CM_ClipMoveToEntities( moveclip_t *clip )
 		}
 
 		CM_TransformedBoxTrace( &trace, clip->start, clip->end, clip->mins, clip->maxs, clipHandle,
-		                        clip->contentmask, 0, origin, angles, clip->collisionType );
+		                        MASK_ALL, 0, origin, angles, clip->collisionType );
 
 		if ( trace.allsolid )
 		{
