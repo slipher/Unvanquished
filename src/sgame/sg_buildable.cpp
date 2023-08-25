@@ -1496,6 +1496,7 @@ static void BuildableSpawnCBSE(gentity_t *ent, buildable_t buildable) {
 
 		case BA_H_BIGPLATFORM: {
 			BUILDABLE_ENTITY_CREATE(BigPlatformEntity);
+			ent->r.contents |= CONTENTS_PLAYERCLIP;
 			break;
 		}
 
