@@ -36,7 +36,7 @@ CG_Obituary
 =============
 */
 // end on WHITE instead of ESC for player names following the tags
-static const char teamTag[][8] = { "^2●^7", "^1●^7", "^4●^7" };
+static const char teamTag[][8] = { "^7", "^7", "^7" };
 
 #define LONGFORM ">"
 static const struct {
@@ -131,6 +131,7 @@ static void CG_Obituary( entityState_t *ent )
 	assistant = ent->groundEntityNum; // we hijack the field for this
 	assistantTeam = (team_t) ( ent->generic1 & 0xFF ); // ugly hack allowing for future expansion(!)
 	mod = ent->eventParm;
+	if ( mod == MOD_TELEFRAG ) return;
 
 	if ( target < 0 || target >= MAX_CLIENTS )
 	{
@@ -192,6 +193,10 @@ static void CG_Obituary( entityState_t *ent )
 	}
 
 	Q_strncpyz( targetName, Info_ValueForKey( targetInfo, "n" ), sizeof( targetName ) );
+
+	// make nothing a teamkill
+	attackerTeam = TEAM_NONE;
+	assistantTeam = TEAM_ALIENS;
 
 	// check for single client messages
 
