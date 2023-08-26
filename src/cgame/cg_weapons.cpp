@@ -2664,6 +2664,7 @@ void CG_HandleMissileHitEntity( entityState_t *es, vec3_t origin )
 	if ( victim->currentState.eType == entityType_t::ET_PLAYER )
 	{
 		PlayHitSound( origin, ma->impactFleshSound );
+		PlayHitSound( origin, ma->impactSound );
 	}
 	else if ( victim->currentState.eType == entityType_t::ET_BUILDABLE &&
 			  CG_Team(victim) == TEAM_ALIENS )
