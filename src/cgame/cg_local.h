@@ -1578,6 +1578,8 @@ struct cgMedia_t
 	sfxHandle_t alienL4ChargePrepare;
 	sfxHandle_t alienL4ChargeStart;
 
+	qhandle_t crateOrangeSkin;
+
 	//light armour
 	qhandle_t   larmourHeadSkin;
 	qhandle_t   larmourLegsSkin;

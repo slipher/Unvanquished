@@ -1400,6 +1400,11 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
 		rotationBone = weapon->rotationBoneIndex;
 	}
 
+	if ( weaponNum == WP_CRATE )
+	{
+		gun.customSkin = cgs.media.crateOrangeSkin;
+	}
+
 	noGunModel = ( ( !ps || cg.renderingThirdPerson ) && weapon->disableIn3rdPerson ) || !gun.hModel;
 
 	if ( !ps )

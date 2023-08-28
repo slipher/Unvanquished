@@ -561,6 +561,10 @@ static void CG_Missile( centity_t *cent )
 	// Only refresh if there is something to display.
 	if ( ma->sprite || ma->model )
 	{
+		if ( ma->number == MIS_CRATE )
+		{
+			ent.customSkin = cgs.media.crateOrangeSkin;
+		}
 		trap_R_AddRefEntityToScene( &ent );
 	}
 }
