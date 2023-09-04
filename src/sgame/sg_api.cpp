@@ -211,10 +211,13 @@ void trap_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const 
 		ASSERT_NQ(results->entityNum, passEntityNum);
 	}
 	ASSERT_EQ(0, results->contents & skipmask);
-	//if (results->startsolid)
-	//      ASSERT_EQ(results->fraction, 0.0f); // wrong, the thing started in is ignored
 	if (results->allsolid)
+	{
 		ASSERT(results->startsolid);
+		// if allsolid is true, the thing the trace box started out overlapping is
+		// *not* ignored, unlike when only allsolid is true.
+		ASSERT_EQ(results->fraction, 0.0f);
+	}
 }
 
 void trap_Trace( trace_t *results, const glm::vec3& start, const glm::vec3& mins, const glm::vec3& maxs,
