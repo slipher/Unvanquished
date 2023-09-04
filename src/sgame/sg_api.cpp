@@ -195,6 +195,26 @@ void trap_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const 
                  const vec3_t end, int passEntityNum, int contentmask, int skipmask )
 {
 	G_CM_Trace(results, start, mins, maxs, end, passEntityNum, contentmask, skipmask, traceType_t::TT_AABB);
+
+	// test invariants
+	ASSERT_GE(results->fraction, 0.0f);
+	ASSERT_LE(results->fraction, 1.0f);
+	if (results->fraction == 1.0f)
+	{
+		ASSERT_EQ(results->contents, 0);
+		ASSERT_EQ(results->entityNum, ENTITYNUM_NONE);
+	}
+	else
+	{
+		ASSERT(results->contents & contentmask);
+		ASSERT_NQ(results->entityNum, ENTITYNUM_NONE);
+		ASSERT_NQ(results->entityNum, passEntityNum);
+	}
+	ASSERT_EQ(0, results->contents & skipmask);
+	//if (results->startsolid)
+	//      ASSERT_EQ(results->fraction, 0.0f); // wrong, the thing started in is ignored
+	if (results->allsolid)
+		ASSERT(results->startsolid);
 }
 
 void trap_Trace( trace_t *results, const glm::vec3& start, const glm::vec3& mins, const glm::vec3& maxs,
