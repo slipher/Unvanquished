@@ -443,6 +443,8 @@ G_InitGame
 */
 void G_InitGame( int levelTime, int randomSeed, bool inClient )
 {
+	Cvar::SetValue("sgame.cm_noCurves", "1");
+
 	srand( randomSeed );
 
 	Log::Notice( "------- Game Initialization -------" );
