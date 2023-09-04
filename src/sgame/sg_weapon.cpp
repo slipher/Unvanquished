@@ -304,6 +304,15 @@ bool G_FindFuel( gentity_t *self )
 	return false;
 }
 
+
+bool inBox(glm::vec3 smallMins, glm::vec3 smallMaxs, glm::vec3 bigMins, glm::vec3 bigMaxs)
+{
+	for (int i = 0; i < 3; i++)
+		if ( !( smallMins[i] > bigMins[i] && smallMaxs[i] < bigMaxs[i] ) )
+			return false;
+	return true;
+}
+
 /*
 ================
 Trace a bounding box against entities, but not the world
@@ -333,6 +342,25 @@ static void G_WideTrace(
 	VectorSet( maxs, width, width, height );
 	VectorNegate( maxs, mins );
 	halfDiagonal = VectorLength( maxs );
+
+	{
+		//glm::vec3 origin = VEC2GLM(ent->s.origin);
+		glm::vec3 origin = VEC2GLM(ent->client->ps.origin);
+		glm::vec3 pmins = origin + VEC2GLM(ent->r.mins);
+		glm::vec3 pmaxs = origin + VEC2GLM(ent->r.maxs);
+		glm::vec3 tmins = muzzle + VEC2GLM(mins);
+		glm::vec3 tmaxs = muzzle + VEC2GLM(maxs);
+		if (!inBox(tmins, tmaxs, pmins, pmaxs)) {
+			tmins.z = -1;
+			tmaxs.z = 1;
+			pmins.z = -2;
+			pmaxs.z = 2;
+			if (!inBox(tmins, tmaxs, pmins, pmaxs))
+				Log::Warn("G_WideTrace REALLY unreliable");
+			else
+				Log::Warn("G_WideTrace unreliable in +z");
+		}
+	}
 
 	G_UnlaggedOn( ent, &muzzle[ 0 ], range + halfDiagonal );
 
