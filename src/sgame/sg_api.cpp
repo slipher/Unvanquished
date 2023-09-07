@@ -171,6 +171,41 @@ bool trap_EntityContact(const vec3_t mins, const vec3_t maxs, const gentity_t *e
 	return G_CM_EntityContact( mins, maxs, ent, traceType_t::TT_AABB );
 }
 
+class TraceCmd : public Cmd::CmdBase
+{
+public:
+	TraceCmd() : CmdBase(0) {}
+	void Run(const Cmd::Args& args) const override
+	{
+		vec3_t start, end;
+		vec3_t mins{}, maxs{};
+		int contents = MASK_ALL;
+		int skipmask = 0;
+		int passEntityNum = ENTITYNUM_NONE;
+		switch (args.Argc())
+		{
+		case 13:
+			if (!Str::ToFloat(args.Argv(7), mins[0]) || !Str::ToFloat(args.Argv(8), mins[1]) || !Str::ToFloat(args.Argv(9), mins[2])
+				|| !Str::ToFloat(args.Argv(10), maxs[0]) || !Str::ToFloat(args.Argv(11), maxs[1]) || !Str::ToFloat(args.Argv(12), maxs[2]))
+				break;
+			DAEMON_FALLTHROUGH;
+		case 7:
+			if (!Str::ToFloat(args.Argv(1), start[0]) || !Str::ToFloat(args.Argv(2), start[1]) || !Str::ToFloat(args.Argv(3), start[2])
+				|| !Str::ToFloat(args.Argv(4), end[0]) || !Str::ToFloat(args.Argv(5), end[1]) || !Str::ToFloat(args.Argv(6), end[2]))
+				break;
+			trace_t trace;
+			G_CM_Trace(&trace, start, mins, maxs, end, passEntityNum, contents, skipmask, traceType_t::TT_AABB);
+			Print("startsolid=%s allsolid=%s fraction=%f\nendpos=%s\nplane=(%f %f %f) %f\ncontents=0x%x entityNum=%d",
+				trace.startsolid, trace.allsolid, trace.fraction,
+				vtos(trace.endpos),
+				trace.plane.normal[0], trace.plane.normal[1], trace.plane.normal[2], trace.plane.dist,
+				trace.contents, trace.entityNum);
+		}
+	}
+};
+bool tracereg;
+TraceCmd tracecmd;
+
 // Traces against the world and all entities. See the comments on struct trace_t (q_shared.h) for
 // a general explanation of trace semantics. The difference with CM_* trace functions is that those
 // only trace against the world or a single BSP model, whereas trap_Trace checks everything in one
@@ -196,7 +231,84 @@ void trap_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const 
 {
 	G_CM_Trace(results, start, mins, maxs, end, passEntityNum, contentmask, skipmask, traceType_t::TT_AABB);
 
+	if (!tracereg) {
+		tracereg = true;
+		Cmd::AddCommand("trace", tracecmd, "otototot");
+	}
+
+	if ( !results->allsolid )
+	{
+		// This happens very frequently, with both player and buildable ground traces
+		// the numerical instability of stopping exactly SURFACE_CLIP_EPSILON away
+		//if ( !results->startsolid && results->fraction == 0.0f )
+		//	Log::Warn( "a non-startsolid 0 fraction trace at %s...", vtos( start ) );
+
+trace_t onlyworld, onlybody;
+G_CM_Trace(&onlyworld, start, mins, maxs, end, passEntityNum, CONTENTS_SOLID, 0, traceType_t::TT_AABB);
+G_CM_Trace(&onlybody, start, mins, maxs, end, passEntityNum, CONTENTS_BODY, 0, traceType_t::TT_AABB);
+
+		if ( mins && maxs && mins[0] < -2 && mins[1] < -2 && mins[2] < -2 &&
+			 maxs[0] > 2 && maxs[1] > 2 && maxs[2] > 2)
+		{
+			vec3_t mins1{ mins[0] + 1, mins[1] + 1, mins[2] + 1 };
+			vec3_t maxs1{ maxs[0] - 1, maxs[1] - 1, maxs[2] - 1 };
+			trace_t wat; // test if a free point was reached at the end of the trace
+			G_CM_Trace(&wat, results->endpos, mins1, maxs1, results->endpos, passEntityNum, contentmask, skipmask, traceType_t::TT_AABB);
+			if ( wat.allsolid )
+			{
+				if ( !results->startsolid && results->fraction == 0.0f )
+				{
+					if ( wat.contents == CONTENTS_BODY && !(results->contents & CONTENTS_BODY) )
+					{
+						// this is caused by the fraction==0.0f early out condition
+					}
+					else
+					{
+						Log::Warn("non-startsolid 0 fraction trace that definitely starts solid. start=%s end=%s mins=%s maxs=%s plane-normal=(%f %f %f)",
+							vtos(start), vtos(end), vtos(mins), vtos(maxs), results->plane.normal[0], results->plane.normal[1], results->plane.normal[2]);
+					}
+					goto invariants;
+				}
+				ASSERT(results->startsolid);
+				ASSERT_LT(results->fraction, 1.0f);
+				std::string endCollide = etos(g_entities + results->entityNum);
+				G_CM_Trace(&wat, start, mins, maxs, start, passEntityNum, contentmask, skipmask, traceType_t::TT_AABB);
+				ASSERT(wat.allsolid);
+				std::string startCollide = etos(g_entities + wat.entityNum);
+				// i guess it can happen if it is all solid via 2+ brushes together
+				//Log::Warn("not allsolid but didn't find free position! start collide: %s other collide: %s start position: %s",
+				//	startCollide, endCollide, vtos(start));
+			}
+		}
+	}
+
+	// for detecting likely misuses of the trace API where the behavior of ignoring beginning overlaps is not expected)
+	if (results->startsolid && !(contentmask & 0x800))
+	{
+		int ents[MAX_GENTITIES];
+		vec3_t m, M;
+		vec3_t z{};
+		VectorAdd(start, mins?mins:z, m);
+		VectorAdd(start, maxs?maxs:z, M);
+		
+		std::string stuff;
+		for (int i = trap_EntitiesInBox(m, M, ents, MAX_GENTITIES); i--; )
+		{
+			if (!g_entities[ents[i]].r.contents) continue;
+			if (passEntityNum != ENTITYNUM_NONE)
+			{
+				if (ents[i] == passEntityNum) continue;
+				if (g_entities[ents[i]].r.ownerNum == passEntityNum) continue;
+				if (g_entities[passEntityNum].r.ownerNum == ents[i]) continue;
+				if (g_entities[ents[i]].r.ownerNum != ENTITYNUM_NONE && g_entities[ents[i]].r.ownerNum == g_entities[passEntityNum].r.ownerNum) continue;
+			}
+			stuff += " ";
+			stuff += etos(g_entities + ents[i]);
+		}		Log::Warn("startsolid overlapping:%s", stuff);
+	}
+
 	// test invariants
+	invariants:
 	ASSERT_GE(results->fraction, 0.0f);
 	ASSERT_LE(results->fraction, 1.0f);
 	if (results->fraction == 1.0f)
@@ -218,6 +330,11 @@ void trap_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const 
 		// *not* ignored, unlike when only allsolid is true.
 		ASSERT_EQ(results->fraction, 0.0f);
 	}
+
+	// nope not true, it's not really just the "initial point"
+	//trace_t startPointTest;
+	//G_CM_Trace( &startPointTest, start, nullptr, nullptr, start, passEntityNum, contentmask, skipmask, traceType_t::TT_AABB );
+	//ASSERT_EQ( startPointTest.allsolid, results->startsolid );
 }
 
 void trap_Trace( trace_t *results, const glm::vec3& start, const glm::vec3& mins, const glm::vec3& maxs,

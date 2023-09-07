@@ -245,14 +245,14 @@ for printing vectors
 char *vtos( const vec3_t v )
 {
 	static  int  index;
-	static  char str[ 8 ][ 32 ];
+	static  char str[ 8 ][ 99 ];
 	char         *s;
 
 	// use an array so that multiple vtos won't collide
 	s = str[ index ];
 	index = ( index + 1 ) & 7;
 
-	Com_sprintf( s, 32, "(%i %i %i)", ( int ) v[ 0 ], ( int ) v[ 1 ], ( int ) v[ 2 ] );
+	Com_sprintf( s, 99, "(%.1f %.1f %.1f)", v[ 0 ], v[ 1 ], v[ 2 ] );
 
 	return s;
 }
