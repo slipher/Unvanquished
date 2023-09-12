@@ -31,6 +31,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "backend/CBSEBackend.h"
 #include "botlib/bot_api.h"
 #include "common/FileSystem.h"
+#include <sgame/botlib/bot_navdraw.h>
+#include "common/cm/cm_local.h"
+#include <glm/glm/gtx/norm.hpp>
 
 #define INTERMISSION_DELAY_TIME 1000
 
@@ -443,8 +446,6 @@ G_InitGame
 */
 void G_InitGame( int levelTime, int randomSeed, bool inClient )
 {
-	Cvar::SetValue("sgame.cm_noCurves", "1");
-
 	srand( randomSeed );
 
 	Log::Notice( "------- Game Initialization -------" );
@@ -2127,6 +2128,177 @@ static void G_EvaluateAcceleration( gentity_t *ent, int msec )
 	VectorCopy( ent->acceleration, ent->oldAccel );
 }
 
+void GetPlan(const cPlane_t *planes, const cFacet_t& f, int i, glm::vec3& norm, float& d)
+{
+	const cPlane_t& p = planes[f.borderPlanes[i]];
+	if (f.borderInward[i])
+	{
+		norm = VEC2GLM(p.plane);
+		d = p.plane[3];
+	}
+	else
+	{
+		norm = -VEC2GLM(p.plane);
+		d = -p.plane[3];
+	}
+}
+
+void DrawSC(DebugDrawQuake& dd, const cSurfaceCollide_t& sc)
+{
+	dd.begin(DU_DRAW_TRIS);
+	for (int a = 0; a < sc.numFacets; a++)
+	{
+		const cFacet_t& f = sc.facets[a];
+		glm::vec3 snorm = VEC2GLM(sc.planes[f.surfacePlane].plane);
+		float sdist = sc.planes[f.surfacePlane].plane[3];
+
+		std::vector<std::array<glm::vec3, 2>> segs;
+
+		for (int i = f.numBorders; i--; )
+		{
+			glm::vec3 pnorm;
+			float pdist;
+			GetPlan(sc.planes, f, i, pnorm, pdist);
+
+			if (glm::abs(glm::dot(snorm, pnorm)) > 0.999f) continue;
+
+			glm::vec3 p = glm::cross(snorm, pnorm);
+			glm::vec3 lineDir = glm::normalize(p);
+			ASSERT_LT(abs(dot(lineDir, snorm)), 0.001);
+			glm::vec3 q = glm::cross(-pnorm, -p);
+			glm::vec3 r = glm::cross(-snorm, p);
+			glm::vec3 lineBase = (sdist * q + pdist * r) / glm::length2(p);
+			float lmin = -9e9, lmax = 9e9;
+
+			for (int j = f.numBorders; j--; )
+			{
+				glm::vec3 bnorm;
+				float bdist;
+				GetPlan(sc.planes, f, j, bnorm, bdist);
+				float dot = glm::dot(bnorm, lineDir);
+				float lineBaseDist = glm::dot(lineBase, bnorm) - bdist;
+				ASSERT(abs(lineBaseDist) < 1e6);
+				float lineBaseDistAlongLine = -lineBaseDist / dot;
+				if (dot > 0.001f)
+				{
+					lmin = std::max(lmin, lineBaseDistAlongLine);
+				}
+				else if (dot < -0.001f)
+				{
+					lmax = std::min(lmax, lineBaseDistAlongLine);
+				}
+
+#if 0
+				int jx = f.borderPlanes[i];
+				if (j == i || jx == f.surfacePlane) continue;
+				vec3_t inter;
+				if (!PlanesGetIntersectionPoint(sc.planes[f.surfacePlane].plane, sc.planes[f.borderPlanes[i]].plane, sc.planes[f.borderPlanes[j]].plane, inter)) continue;
+				int k;
+				for (k = f.numBorders; k--; )
+				{
+					if (k == i || k == j || f.borderPlanes[k] == f.surfacePlane) continue;
+					planeSide_t match = !f.borderInward ? planeSide_t::SIDE_FRONT : planeSide_t::SIDE_BACK;
+					if (PointOnPlaneSide(inter, sc.planes[f.borderPlanes[k]].plane) != match)
+					{
+						Log::defaultLogger.WithoutSuppression().Notice("%d and %d intersection stopped by %d", i, j, k);
+						break;
+					}
+				}
+				if (k == -1)
+					verts.push_back(VEC2GLM(inter));
+#endif
+			}
+			if (lmax > lmin + 0.001)
+			{
+				segs.push_back({ lineBase + lineDir * lmin, lineBase + lineDir * lmax });
+				Log::Notice("Facet %d segment %s %s", a, vtos(&segs.back()[0].x), vtos(&segs.back()[1].x));
+
+			}
+		}
+		if (segs.size() < 3)
+		{
+			Log::Warn("derp");
+		}
+		else
+		{
+			glm::vec3 interior{};
+			for (auto& seg : segs)
+				interior += seg[0] + seg[1];
+			interior /= 2 * segs.size();
+			auto color = Color::detail::Indexed(a);
+			auto addv = [&](glm::vec3 v) { dd.vertex(v.x, v.z, v.y, duRGBAf(color.Red(), color.Green(), color.Blue(), color.Alpha())); };
+			for (auto& seg : segs)
+			{
+				addv(interior);
+				addv(seg[0]);
+				addv(seg[1]);
+				addv(seg[1]);
+				addv(seg[0]);
+				addv(interior);
+			}
+		}
+	}
+	dd.end();
+}
+
+void DrawPlanes(DebugDrawQuake& dd, const cSurfaceCollide_t& sc, int facetNum)
+{
+	glm::vec3 mins = VEC2GLM(sc.bounds[0]);
+	glm::vec3 maxs = VEC2GLM(sc.bounds[1]);
+	glm::vec3 size = maxs - mins;
+	glm::vec3 interior = 0.5f * (mins + maxs);
+	float scale = std::max({ size.x, size.y, size.z });
+	const cFacet_t& f = sc.facets[facetNum];
+	int c = 0;
+	dd.depthMask(true);
+	dd.begin(DU_DRAW_QUADS);
+	for (int i = 0; i < f.numBorders; i++)
+	{
+		glm::vec3 lol(0.29309, .694026923, .382853);
+		lol = glm::normalize(lol);
+		const cPlane_t& plane = sc.planes[f.borderPlanes[i]];
+		glm::vec3 norm0 = VEC2GLM(plane.plane);
+		glm::vec3 planeOrig = plane.plane[3] * norm0;
+		glm::vec3 norm = f.borderInward[i] ? norm0 : -norm0;
+		auto p1 = glm::normalize(glm::cross(norm, lol));
+		auto p2 = glm::cross(p1, norm);
+		float u = glm::dot(interior - planeOrig, p1);
+		float v = glm::dot(interior - planeOrig, p2);
+		auto color = Color::detail::Indexed(c++);
+		auto A = planeOrig + (u - scale) * p1 + (v - scale) * p2;
+		auto B = planeOrig + (u - scale) * p1 + (v + scale) * p2;
+		auto C = planeOrig + (u + scale) * p1 + (v + scale) * p2;
+		auto D = planeOrig + (u + scale) * p1 + (v - scale) * p2;
+		auto addv = [&](glm::vec3 v) { dd.vertex(v.x, v.z, v.y, duRGBAf(color.Red(), color.Green(), color.Blue(), color.Alpha())); };
+		addv(A);
+		addv(B);
+		addv(C);
+		addv(D);
+		addv(D);
+		addv(C);
+		addv(B);
+		addv(A);
+		//front (facing toward interior) colorful, back orange
+		color = Color::LtOrange;
+		A -= norm;
+		B -= norm;
+		C -= norm;
+		D -= norm;
+		addv(A);
+		addv(B);
+		addv(C);
+		addv(D);
+		addv(D);
+		addv(C);
+		addv(B);
+		addv(A);
+
+		float d = glm::dot(VEC2GLM(g_entities[0].s.origin) - planeOrig, norm);
+		Log::Notice("%d %+3.2f", i, d);
+	}
+	dd.end();
+}
+
 /*
 ================
 G_RunFrame
@@ -2134,12 +2306,54 @@ G_RunFrame
 Advances the non-player objects in the world
 ================
 */
+Cvar::Cvar<std::string> drawPt("drawPt", "", 0, "");
+Cvar::Cvar<std::string> ptmins("ptmins", "", 0, "-1 -1 -1");
+Cvar::Cvar<std::string> ptmaxs("ptmaxs", "", 0, "1 1 1");
+
+Cvar::Cvar<int> surfPlan("surfPlan", "", 0, -1);
+Cvar::Cvar<int> surfSC("surfSC", "", 0, -1);
 void G_RunFrame( int levelTime )
 {
 	int        i;
 	gentity_t  *ent;
 	int        msec;
 	static int ptime3000 = 0;
+
+	glm::vec3 org;
+	if (3 == sscanf(drawPt.Get().c_str(), "%f %f %f", &org.x, &org.y, &org.z))
+	{
+		glm::vec3 mins, maxs;
+		sscanf(ptmins.Get().c_str(), "%f %f %f", &mins.x, &mins.y, &mins.z);
+		sscanf(ptmaxs.Get().c_str(), "%f %f %f", &maxs.x, &maxs.y, &maxs.z);
+		Cvar::SetValue("r_debugSurface", "1");
+		DebugDrawQuake dd;
+		dd.init();
+		unsigned int color[]{ -1,-1,-1,-1,-1,-1, };
+		duDebugDrawBox(&dd, org.x + mins.x, org.z + mins.z, org.y + mins.y, org.x + maxs.x, org.z + maxs.z, org.y + maxs.y, color);
+		dd.sendCommands();
+	}
+
+	if (*surfSC >= 0 && *surfSC < cm.numSurfaces)
+	{
+		auto& s = *cm.surfaces[*surfSC];
+		auto& sc = *s.sc;
+		DebugDrawQuake dd;
+		dd.init();
+		DrawSC(dd, sc);
+		dd.sendCommands();
+		surfSC.Reset();
+	}
+
+	if (*surfPlan >= 0 && *surfPlan < cm.numSurfaces)
+	{
+		auto& s = *cm.surfaces[*surfPlan];
+		auto& sc = *s.sc;
+		DebugDrawQuake dd;
+		dd.init();
+		DrawPlanes(dd, sc, 0);
+		dd.sendCommands();
+		surfPlan.Reset();
+	}
 
 	// if we are waiting for the level to restart, do nothing
 	if ( level.restarted )
