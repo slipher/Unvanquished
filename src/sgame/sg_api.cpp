@@ -171,44 +171,6 @@ bool trap_EntityContact(const vec3_t mins, const vec3_t maxs, const gentity_t *e
 	return G_CM_EntityContact( mins, maxs, ent, traceType_t::TT_AABB );
 }
 
-class TraceCmd : public Cmd::CmdBase
-{
-public:
-	TraceCmd() : CmdBase(0) {}
-	void Run(const Cmd::Args& args) const override
-	{
-		vec3_t start, end;
-		vec3_t mins{}, maxs{};
-		int contents = MASK_ALL;
-		int skipmask = 0;
-		int passEntityNum = ENTITYNUM_NONE;
-		switch (args.Argc())
-		{
-		case 13:
-			if (!Str::ToFloat(args.Argv(7), mins[0]) || !Str::ToFloat(args.Argv(8), mins[1]) || !Str::ToFloat(args.Argv(9), mins[2])
-				|| !Str::ToFloat(args.Argv(10), maxs[0]) || !Str::ToFloat(args.Argv(11), maxs[1]) || !Str::ToFloat(args.Argv(12), maxs[2]))
-				break;
-			DAEMON_FALLTHROUGH;
-		case 7:
-			if (!Str::ToFloat(args.Argv(1), start[0]) || !Str::ToFloat(args.Argv(2), start[1]) || !Str::ToFloat(args.Argv(3), start[2])
-				|| !Str::ToFloat(args.Argv(4), end[0]) || !Str::ToFloat(args.Argv(5), end[1]) || !Str::ToFloat(args.Argv(6), end[2]))
-				break;
-			trace_t trace;
-			extern bool cmdbg;
-			cmdbg = true;
-			G_CM_Trace(&trace, start, mins, maxs, end, passEntityNum, contents, skipmask, traceType_t::TT_AABB);
-			cmdbg = false;
-			Print("startsolid=%s allsolid=%s fraction=%f\nendpos=%s\nplane=(%f %f %f) %f\ncontents=0x%x entityNum=%d",
-				trace.startsolid, trace.allsolid, trace.fraction,
-				vtos(trace.endpos),
-				trace.plane.normal[0], trace.plane.normal[1], trace.plane.normal[2], trace.plane.dist,
-				trace.contents, trace.entityNum);
-		}
-	}
-};
-bool tracereg;
-TraceCmd tracecmd;
-
 // Traces against the world and all entities. See the comments on struct trace_t (q_shared.h) for
 // a general explanation of trace semantics. The difference with CM_* trace functions is that those
 // only trace against the world or a single BSP model, whereas trap_Trace checks everything in one
@@ -233,11 +195,6 @@ void trap_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const 
                  const vec3_t end, int passEntityNum, int contentmask, int skipmask )
 {
 	G_CM_Trace(results, start, mins, maxs, end, passEntityNum, contentmask, skipmask, traceType_t::TT_AABB);
-
-	if (!tracereg) {
-		tracereg = true;
-		Cmd::AddCommand("trace", tracecmd, "otototot");
-	}
 
 	bool shouldHaveFreeSpaceAtEndpoint = results->fraction == 1.0f || ( !results->startsolid && results->fraction != 0.0f );
 	if ( shouldHaveFreeSpaceAtEndpoint && mins && maxs && mins[0] < -2 && mins[1] < -2 && mins[2] < -2 &&
