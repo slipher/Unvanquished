@@ -181,15 +181,23 @@ static void CG_ClipMoveToEntities( const vec3_t start, const vec3_t mins,
 			ASSERT_UNREACHABLE();
 		}
 
-		if ( trace.allsolid || trace.fraction < tr->fraction )
+		if ( trace.allsolid )
 		{
-			trace.entityNum = ent->number;
 			*tr = trace;
-		}
-		else if ( trace.startsolid )
-		{
-			tr->startsolid = true;
 			tr->entityNum = ent->number;
+		}
+		else if ( trace.fraction < tr->fraction )
+		{
+			// make sure we keep a startsolid from a previous trace
+			bool oldStartsolid = tr->startsolid;
+
+			*tr = trace;
+			tr->startsolid |= oldStartsolid;
+			tr->entityNum = ent->number;
+		}
+		else
+		{
+			tr->startsolid |= trace.startsolid;
 		}
 
 		if ( tr->allsolid )
