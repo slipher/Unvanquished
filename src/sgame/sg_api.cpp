@@ -239,47 +239,18 @@ void trap_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const 
 		Cmd::AddCommand("trace", tracecmd, "otototot");
 	}
 
-	if ( !results->allsolid )
+	bool shouldHaveFreeSpaceAtEndpoint = results->fraction == 1.0f || ( !results->startsolid && results->fraction != 0.0f );
+	if ( shouldHaveFreeSpaceAtEndpoint && mins && maxs && mins[0] < -2 && mins[1] < -2 && mins[2] < -2 &&
+			maxs[0] > 2 && maxs[1] > 2 && maxs[2] > 2)
 	{
-		// This happens very frequently, with both player and buildable ground traces
-		// the numerical instability of stopping exactly SURFACE_CLIP_EPSILON away
-		//if ( !results->startsolid && results->fraction == 0.0f )
-		//	Log::Warn( "a non-startsolid 0 fraction trace at %s...", vtos( start ) );
-
-trace_t onlyworld, onlybody;
-G_CM_Trace(&onlyworld, start, mins, maxs, end, passEntityNum, CONTENTS_SOLID, 0, traceType_t::TT_AABB);
-G_CM_Trace(&onlybody, start, mins, maxs, end, passEntityNum, CONTENTS_BODY, 0, traceType_t::TT_AABB);
-
-		if ( mins && maxs && mins[0] < -2 && mins[1] < -2 && mins[2] < -2 &&
-			 maxs[0] > 2 && maxs[1] > 2 && maxs[2] > 2)
+		vec3_t mins1{ mins[0] + 1, mins[1] + 1, mins[2] + 1 };
+		vec3_t maxs1{ maxs[0] - 1, maxs[1] - 1, maxs[2] - 1 };
+		trace_t wat; // test if a free point was reached at the end of the trace
+		G_CM_Trace(&wat, results->endpos, mins1, maxs1, results->endpos, passEntityNum, contentmask, skipmask, traceType_t::TT_AABB);
+		if ( wat.fraction != 1.0f )
 		{
-			vec3_t mins1{ mins[0] + 1, mins[1] + 1, mins[2] + 1 };
-			vec3_t maxs1{ maxs[0] - 1, maxs[1] - 1, maxs[2] - 1 };
-			trace_t wat; // test if a free point was reached at the end of the trace
-			G_CM_Trace(&wat, results->endpos, mins1, maxs1, results->endpos, passEntityNum, contentmask, skipmask, traceType_t::TT_AABB);
-			if ( wat.allsolid ) // free point definitely not reached
-			{
-				if ( !results->startsolid && results->fraction == 0.0f )
-				{
-					if ( wat.contents == CONTENTS_BODY && !(results->contents & CONTENTS_BODY) )
-					{
-						// this is caused by the fraction==0.0f early out condition
-					}
-					else
-					{
-						// new bad case, not fixed by commenting the return
-						// /trace 143.9 1880.8 -126.7  160.9 1863.8 -126.7  -32 -32 -22  32 32 70   -> not startsolid
-						// /trace 143.9 1880.8 -126.7  143.9 1880.8 -126.7  -31 -31 -21  31 31 69   -> allsolid
-						// or even // /trace 143.9 1880.8 -126.7  143.9 1880.8 -126.7  0 0 0 0 0 63   -> allsolid
-						Log::Warn("non-startsolid 0 fraction trace that definitely starts solid. start=%s end=%s mins=%s maxs=%s plane-normal=(%f %f %f)",
-							vtos(start), vtos(end), vtos(mins), vtos(maxs), results->plane.normal[0], results->plane.normal[1], results->plane.normal[2]);
-					}
-					goto invariants;
-				}
-				ASSERT(results->startsolid);
-				ASSERT_LT(results->fraction, 1.0f);
-				// OK this is normal. we can start overlapping thing A, and the trace stops when hitting thing B while we still haven't gotten out of A
-			}
+			Log::Warn("endpoint is not clear of collisions as expected. start=%s end=%s mins=%s maxs=%s plane-normal=(%f %f %f)",
+				vtos(start), vtos(end), vtos(mins), vtos(maxs), results->plane.normal[0], results->plane.normal[1], results->plane.normal[2]);
 		}
 	}
 
@@ -288,10 +259,10 @@ G_CM_Trace(&onlybody, start, mins, maxs, end, passEntityNum, CONTENTS_BODY, 0, t
 	{
 		if ( mins && maxs )
 		{
-			vec3_t mins2{ mins2[0] + .2, mins2[1] + .2, mins2[2] + .2 };
-			vec3_t maxs2{ maxs2[0] - .2, maxs2[1] - .2, maxs2[2] - .2 };
+			vec3_t mins2{ mins[0] + .2, mins[1] + .2, mins[2] + .2 };
+			vec3_t maxs2{ maxs[0] - .2, maxs[1] - .2, maxs[2] - .2 };
 			trace_t redo;
-			G_CM_Trace(&redo, start, mins, maxs, end, passEntityNum, contentmask, skipmask, traceType_t::TT_AABB);
+			G_CM_Trace(&redo, start, mins2, maxs2, end, passEntityNum, contentmask, skipmask, traceType_t::TT_AABB);
 			if (!redo.startsolid) goto invariants;
 		}
 
@@ -315,7 +286,8 @@ G_CM_Trace(&onlybody, start, mins, maxs, end, passEntityNum, CONTENTS_BODY, 0, t
 			stuff += " ";
 			stuff += etos(g_entities + ents[i]);
 		}
-		Log::Warn("startsolid overlapping:%s", stuff);
+		Log::Warn("startsolid overlapping:%s\nstart=%s end=%s mins=%s maxs=%s", stuff,
+			vtos(start), vtos(end), vtos(mins), vtos(maxs));
 	}
 
 	// test invariants
@@ -326,6 +298,10 @@ G_CM_Trace(&onlybody, start, mins, maxs, end, passEntityNum, CONTENTS_BODY, 0, t
 	{
 		ASSERT_EQ(results->contents, 0);
 		ASSERT_EQ(results->entityNum, ENTITYNUM_NONE);
+
+		// these are also not valid with allsolid but could have been overwritten
+		ASSERT_EQ(results->plane.dist, 0);
+		ASSERT_EQ(results->surfaceFlags, 0);
 	}
 	else
 	{
@@ -345,16 +321,50 @@ G_CM_Trace(&onlybody, start, mins, maxs, end, passEntityNum, CONTENTS_BODY, 0, t
 	{
 		ASSERT_EQ(roundf(1000 * VectorLength(results->plane.normal)), 1000);
 	}
-	if (results->fraction == 1.0f)
-	{
-		ASSERT_EQ(results->surfaceFlags, 987654321);
-		// also not valid with allsolid but could have been overwritten
-	}
-	else if (!results->allsolid)
-	{
-		ASSERT_NQ(results->surfaceFlags, 987654321);
-	}
+
 	ASSERT_LT(Distance(results->endpos, &((1.0f - results->fraction) * VEC2GLM(start) + results->fraction * VEC2GLM(end) )[0]), 0.01f);
+
+	ASSERT_EQ(CM_CheckTraceConsistency(start, end, contentmask, skipmask, *results), "");
+
+	//check plane. but ignore for non-world entities where it is not corrected for origin
+	if (!results->allsolid && results->fraction != 1.0f && results->entityNum >= ENTITYNUM_WORLD)
+	{
+		float maxCornerDist = mins ? glm::length(glm::max(-VEC2GLM(mins), VEC2GLM(maxs))) : 0;
+		float endposPlaneDist = glm::abs(DotProduct(results->endpos, results->plane.normal) - results->plane.dist);
+		if (endposPlaneDist > maxCornerDist + 0.2f)
+			Log::Warn("plane seems wrong. start=%s end=%s mins=%s maxs=%s",
+				vtos(start), vtos(end), vtos(mins), vtos(maxs));
+	}
+
+
+
+	// check startsolid. interesting if original trace is nonzero length to compare vs. the zero length implementation
+	if (mins && maxs)
+	{
+		if (results->startsolid)
+		{
+			// slightly bigger box at start shoudl still be solid
+			auto minsInflated = VEC2GLM(mins) - 0.1f;
+			auto maxsInflated = VEC2GLM(maxs) + 0.1f;
+			trace_t startcheck;
+			G_CM_Trace(&startcheck, start, &minsInflated[0], &maxsInflated[0], start, passEntityNum, contentmask, skipmask, traceType_t::TT_AABB);
+			if (!startcheck.startsolid)
+				Log::Warn("a startsolid went away with zero-length trace:start=%s end=%s mins=%s maxs=%s",
+					vtos(start), vtos(end), vtos(mins), vtos(maxs));
+		}
+		else
+		{
+			// slightly smaller box at start should not be solid
+			// slightly bigger trace shoudl still be solid
+			auto minsDeflated = VEC2GLM(mins) + 0.1f;
+			auto maxsDeflated = VEC2GLM(maxs) - 0.1f;
+			trace_t startcheck;
+			G_CM_Trace(&startcheck, start, &minsDeflated[0], &maxsDeflated[0], start, passEntityNum, contentmask, skipmask, traceType_t::TT_AABB);
+			if (startcheck.startsolid)
+				Log::Warn("a startsolid appeared with zero-length trace:start=%s end=%s mins=%s maxs=%s",
+					vtos(start), vtos(end), vtos(mins), vtos(maxs));
+		}
+	}
 }
 
 void trap_Trace( trace_t *results, const glm::vec3& start, const glm::vec3& mins, const glm::vec3& maxs,
