@@ -195,6 +195,10 @@ void trap_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const 
                  const vec3_t end, int passEntityNum, int contentmask, int skipmask )
 {
 	G_CM_Trace(results, start, mins, maxs, end, passEntityNum, contentmask, skipmask, traceType_t::TT_AABB);
+	
+	int passOwner = g_entities[passEntityNum].r.ownerNum;
+	if (passOwner != 0 && passOwner != ENTITYNUM_NONE)
+		Log::Warn("passentity %s has has an owner %s", etos(g_entities + passEntityNum), etos(g_entities + passOwner));
 
 	bool shouldHaveFreeSpaceAtEndpoint = results->fraction == 1.0f || ( !results->startsolid && results->fraction != 0.0f );
 	if ( shouldHaveFreeSpaceAtEndpoint && mins && maxs && mins[0] < -2 && mins[1] < -2 && mins[2] < -2 &&
@@ -293,8 +297,6 @@ void trap_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const 
 				vtos(start), vtos(end), vtos(mins), vtos(maxs));
 	}
 
-
-
 	// check startsolid. interesting if original trace is nonzero length to compare vs. the zero length implementation
 	if (mins && maxs)
 	{
@@ -311,7 +313,6 @@ void trap_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const 
 		}
 		else
 		{
-			// slightly smaller box at start should not be solid
 			// slightly bigger trace shoudl still be solid
 			auto minsDeflated = VEC2GLM(mins) + 0.1f;
 			auto maxsDeflated = VEC2GLM(maxs) - 0.1f;
