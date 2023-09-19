@@ -741,9 +741,6 @@ void G_CM_ClipToEntity( trace_t *trace, const vec3_t start, const vec3_t mins, c
 	}
 }
 
-// FIXME: Copied from cm_local.h
-#define BOX_MODEL_HANDLE ( MAX_SUBMODELS + 1 )
-
 /*
 ====================
 G_CM_ClipMoveToEntities
