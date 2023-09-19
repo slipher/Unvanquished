@@ -2187,31 +2187,11 @@ void DrawSC(DebugDrawQuake& dd, const cSurfaceCollide_t& sc)
 				{
 					lmax = std::min(lmax, lineBaseDistAlongLine);
 				}
-
-#if 0
-				int jx = f.borderPlanes[i];
-				if (j == i || jx == f.surfacePlane) continue;
-				vec3_t inter;
-				if (!PlanesGetIntersectionPoint(sc.planes[f.surfacePlane].plane, sc.planes[f.borderPlanes[i]].plane, sc.planes[f.borderPlanes[j]].plane, inter)) continue;
-				int k;
-				for (k = f.numBorders; k--; )
-				{
-					if (k == i || k == j || f.borderPlanes[k] == f.surfacePlane) continue;
-					planeSide_t match = !f.borderInward ? planeSide_t::SIDE_FRONT : planeSide_t::SIDE_BACK;
-					if (PointOnPlaneSide(inter, sc.planes[f.borderPlanes[k]].plane) != match)
-					{
-						Log::defaultLogger.WithoutSuppression().Notice("%d and %d intersection stopped by %d", i, j, k);
-						break;
-					}
-				}
-				if (k == -1)
-					verts.push_back(VEC2GLM(inter));
-#endif
 			}
 			if (lmax > lmin + 0.001)
 			{
 				segs.push_back({ lineBase + lineDir * lmin, lineBase + lineDir * lmax });
-				Log::Notice("Facet %d segment %s %s", a, vtos(&segs.back()[0].x), vtos(&segs.back()[1].x));
+				//Log::Notice("Facet %d segment %s %s", a, vtos(&segs.back()[0].x), vtos(&segs.back()[1].x));
 
 			}
 		}
@@ -2225,7 +2205,93 @@ void DrawSC(DebugDrawQuake& dd, const cSurfaceCollide_t& sc)
 			for (auto& seg : segs)
 				interior += seg[0] + seg[1];
 			interior /= 2 * segs.size();
-			auto color = Color::detail::Indexed(a);
+			auto color = Color::detail::Indexed(a + 1);
+			auto addv = [&](glm::vec3 v) { dd.vertex(v.x, v.z, v.y, duRGBAf(color.Red(), color.Green(), color.Blue(), color.Alpha())); };
+			for (auto& seg : segs)
+			{
+				addv(interior);
+				addv(seg[0]);
+				addv(seg[1]);
+				addv(seg[1]);
+				addv(seg[0]);
+				addv(interior);
+			}
+		}
+	}
+	dd.end();
+}
+
+// I think the "winding" APIs relate to finding the polygon for a brush face, but haven't figured them out yet
+void DrawBrush(DebugDrawQuake& dd, const cbrush_t& brush)
+{
+	dd.begin(DU_DRAW_TRIS);
+	for (int a = 0; a < brush.numsides; a++)
+	{
+		const cbrushside_t& side = brush.sides[a];
+		glm::vec3 snorm = VEC2GLM(side.plane->normal);
+		float sdist = side.plane->dist;
+
+		std::vector<std::array<glm::vec3, 2>> segs;
+
+		for (int i = brush.numsides; i--; )
+		{
+			glm::vec3 pnorm = VEC2GLM(brush.sides[i].plane->normal);
+			float pdist = brush.sides[i].plane->dist;
+
+			if (glm::abs(glm::dot(snorm, pnorm)) > 0.999f) continue;
+
+			glm::vec3 p = glm::cross(snorm, pnorm);
+			glm::vec3 lineDir = glm::normalize(p);
+			ASSERT_LT(abs(dot(lineDir, snorm)), 0.001);
+			glm::vec3 q = glm::cross(-pnorm, -p);
+			glm::vec3 r = glm::cross(-snorm, p);
+			glm::vec3 lineBase = (sdist * q + pdist * r) / glm::length2(p);
+			float lmin = -9e9, lmax = 9e9;
+
+			for (int j = brush.numsides; j--; )
+			{
+				glm::vec3 bnorm = VEC2GLM(brush.sides[j].plane->normal);
+				float bdist = brush.sides[j].plane->dist;
+				float dot = glm::dot(bnorm, lineDir);
+				float lineBaseDist = glm::dot(lineBase, bnorm) - bdist;
+				ASSERT(abs(lineBaseDist) < 1e6);
+				float lineBaseDistAlongLine = -lineBaseDist / dot;
+				if (dot > 0.001f)
+				{
+					lmax = std::min(lmax, lineBaseDistAlongLine);
+				}
+				else if (dot < -0.001f)
+				{
+					lmin = std::max(lmin, lineBaseDistAlongLine);
+				}
+				else if (glm::dot(bnorm, lineBase) > bdist + 0.001f)
+				{
+					// parallel clippnig planes are common with brushes...
+					lmin = lmax;
+					break;
+				}
+			}
+			if (lmax > lmin + 0.001)
+			{
+				segs.push_back({ lineBase + lineDir * lmin, lineBase + lineDir * lmax });
+				for (int k = brush.numsides; k--;)
+				{
+					for (glm::vec3 pt : segs.back())
+					{
+						float d = glm::dot(pt, VEC2GLM(brush.sides[k].plane->normal));
+						if (d > brush.sides[k].plane->dist + 0.01f)
+							Log::Warn("out of range!");
+					}
+				}
+			}
+		}
+		if (segs.size() >= 3)
+		{
+			glm::vec3 interior{};
+			for (auto& seg : segs)
+				interior += seg[0] + seg[1];
+			interior /= 2 * segs.size();
+			auto color = Color::detail::Indexed(a + 1);
 			auto addv = [&](glm::vec3 v) { dd.vertex(v.x, v.z, v.y, duRGBAf(color.Red(), color.Green(), color.Blue(), color.Alpha())); };
 			for (auto& seg : segs)
 			{
@@ -2294,7 +2360,7 @@ void DrawPlanes(DebugDrawQuake& dd, const cSurfaceCollide_t& sc, int facetNum)
 		addv(A);
 
 		float d = glm::dot(VEC2GLM(g_entities[0].s.origin) - planeOrig, norm);
-		Log::Notice("%d %+3.2f", i, d);
+		//Log::Notice("%d %+3.2f", i, d);
 	}
 	dd.end();
 }
@@ -2312,12 +2378,18 @@ Cvar::Cvar<std::string> ptmaxs("ptmaxs", "", 0, "1 1 1");
 
 Cvar::Cvar<int> surfPlan("surfPlan", "", 0, -1);
 Cvar::Cvar<int> surfSC("surfSC", "", 0, -1);
-void G_RunFrame( int levelTime )
+Cvar::Cvar<int> brush("brush", "", 0, -1);
+void G_RunFrame(int levelTime)
 {
 	int        i;
-	gentity_t  *ent;
+	gentity_t* ent;
 	int        msec;
 	static int ptime3000 = 0;
+
+	Cvar::SetValue("r_debugSurface", "1");
+	DebugDrawQuake dd;
+	dd.init();
+	dd.depthMask(true);
 
 	glm::vec3 org;
 	if (3 == sscanf(drawPt.Get().c_str(), "%f %f %f", &org.x, &org.y, &org.z))
@@ -2325,35 +2397,30 @@ void G_RunFrame( int levelTime )
 		glm::vec3 mins, maxs;
 		sscanf(ptmins.Get().c_str(), "%f %f %f", &mins.x, &mins.y, &mins.z);
 		sscanf(ptmaxs.Get().c_str(), "%f %f %f", &maxs.x, &maxs.y, &maxs.z);
-		Cvar::SetValue("r_debugSurface", "1");
-		DebugDrawQuake dd;
-		dd.init();
-		unsigned int color[]{ -1,-1,-1,-1,-1,-1, };
+		unsigned int color[]{ ~0U, ~0U, ~0U, ~0U, ~0U, ~0U };
 		duDebugDrawBox(&dd, org.x + mins.x, org.z + mins.z, org.y + mins.y, org.x + maxs.x, org.z + maxs.z, org.y + maxs.y, color);
-		dd.sendCommands();
 	}
 
-	if (*surfSC >= 0 && *surfSC < cm.numSurfaces)
+	if (*surfSC >= 0 && *surfSC < cm.numSurfaces && cm.surfaces[*surfSC])
 	{
 		auto& s = *cm.surfaces[*surfSC];
 		auto& sc = *s.sc;
-		DebugDrawQuake dd;
-		dd.init();
 		DrawSC(dd, sc);
-		dd.sendCommands();
-		surfSC.Reset();
 	}
 
-	if (*surfPlan >= 0 && *surfPlan < cm.numSurfaces)
+	if (*surfPlan >= 0 && *surfPlan < cm.numSurfaces && cm.surfaces[*surfPlan])
 	{
 		auto& s = *cm.surfaces[*surfPlan];
 		auto& sc = *s.sc;
-		DebugDrawQuake dd;
-		dd.init();
 		DrawPlanes(dd, sc, 0);
-		dd.sendCommands();
-		surfPlan.Reset();
 	}
+
+	if (*brush >= 0 && *brush < cm.numBrushes)
+	{
+		DrawBrush(dd, cm.brushes[*brush]);
+	}
+
+	dd.sendCommands();
 
 	// if we are waiting for the level to restart, do nothing
 	if ( level.restarted )
