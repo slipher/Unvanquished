@@ -1679,7 +1679,7 @@ static void CG_ScanForCrosshairEntity()
 	VectorCopy( cg.refdef.vieworg, start );
 	VectorMA( start, 131072, cg.refdef.viewaxis[ 0 ], end );
 
-	CG_Trace( &trace, start, vec3_origin, vec3_origin, end,
+	CG_Trace( &trace, start, nullptr, nullptr, end,
 			  cg.snap->ps.clientNum, CONTENTS_SOLID | CONTENTS_BODY, 0 );
 
 	// ignore special entities
