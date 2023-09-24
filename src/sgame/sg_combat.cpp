@@ -821,6 +821,8 @@ bool G_CanDamage( gentity_t *targ, vec3_t origin )
 	VectorScale( midpoint, 0.5, midpoint );
 
 	VectorCopy( midpoint, dest );
+	// this one has startsolid sometimes, in rocketpod SafeShot testing a hypothetical hit location.
+	// maybe an actual bug somewhere as the hit locattion seemed almost 1 qu into the wall
 	trap_Trace( &tr, origin, nullptr, nullptr, dest, ENTITYNUM_NONE, MASK_SOLID, 0 );
 
 	if ( tr.fraction == 1.0  || tr.entityNum == targ->num() )

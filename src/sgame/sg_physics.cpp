@@ -128,8 +128,9 @@ void G_Physics( gentity_t *ent )
 
 			VectorMA( origin, -2.0f, ent->s.origin2, origin );
 
+			// dead buildables can have contents==0
 			trap_Trace( &tr, ent->r.currentOrigin, ent->r.mins, ent->r.maxs, origin, ent->num(),
-			            ent->clipmask, 0 );
+			            ent->clipmask | ((ent->r.contents == 0) * 0x800), 0 );
 
 			if ( tr.fraction == 1.0f )
 			{

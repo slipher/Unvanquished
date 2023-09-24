@@ -208,7 +208,9 @@ bool RocketpodComponent::SafeShot(int passEntityNumber, const glm::vec3& origin,
 	glm::vec3 end  = origin + ROCKETPOD_RANGE * direction;
 
 	trace_t trace;
-	trap_Trace( &trace, &origin[0], &mins[0], &maxs[0], &end[0], passEntityNumber, MASK_SHOT, 0 );
+	//RocketThink ought to be passing the passEntityNum here
+	// idea: have owner be a gentityref but use the number only for the remove on disconnect stuff. add num() function which may return ENTITNUMNONE
+	trap_Trace( &trace, &origin[0], &mins[0], &maxs[0], &end[0], passEntityNumber, MASK_SHOT | (passEntityNumber / ENTITYNUM_NONE * 0x800), 0 );
 
 	// TODO: Refactor area damage (testing) helpers.
 	return !G_RadiusDamage(

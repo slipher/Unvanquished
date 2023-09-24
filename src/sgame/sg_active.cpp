@@ -672,7 +672,7 @@ static void SpectatorThink( gentity_t *ent, usercmd_t *ucmd )
 		pm.ps = &client->ps;
 		pm.pmext = &client->pmext;
 		pm.cmd = *ucmd;
-		pm.tracemask = MASK_DEADSOLID; // spectators can fly through bodies
+		pm.tracemask = MASK_DEADSOLID | 0x800; // spectators can fly through bodies
 		pm.trace = trap_Trace;
 		pm.pointcontents = G_CM_PointContents;
 
@@ -1636,9 +1636,13 @@ static void G_UnlaggedDetectCollisions( gentity_t *ent )
 
 	G_UnlaggedOn( ent, ent->client->oldOrigin, range );
 
+	// got an overlap here playing with timescale 3 in debug mode??
+	// with a dead bot player
+	// this would be broken if ClipMoveToEntities had correct semantics
+	// but it uses the entitynum that shouldn't be there so it gets the right answer
 	// FIXME: uses wonky entityNum behavior (see trap_Trace comment)
 	trap_Trace( &tr, ent->client->oldOrigin, ent->r.mins, ent->r.maxs,
-	            ent->client->ps.origin, ent->s.number, MASK_PLAYERSOLID, 0 );
+	            ent->client->ps.origin, ent->s.number, MASK_PLAYERSOLID | 0x800, 0 );
 
 	if ( tr.entityNum >= 0 && tr.entityNum < MAX_CLIENTS )
 	{

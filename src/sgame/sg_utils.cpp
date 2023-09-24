@@ -244,6 +244,7 @@ for printing vectors
 */
 char *vtos( const vec3_t v )
 {
+	if (!v) return "null";
 	static  int  index;
 	static  char str[ 8 ][ 99 ];
 	char         *s;

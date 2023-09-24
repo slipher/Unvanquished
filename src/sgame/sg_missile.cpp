@@ -502,11 +502,15 @@ void G_RunMissile( gentity_t *ent )
 	passent = ent->r.ownerNum;
 
 	// general trace to see if we hit anything at all
+	// it's normal that it overlaps map geometry if pointAgainstWorld is enabled
+	// otherwise it's the bug described below
 	trap_Trace( &tr, ent->r.currentOrigin, ent->r.mins, ent->r.maxs,
-	            origin, passent, ent->clipmask, 0 );
+	            origin, passent, ent->clipmask | 0x800, 0 );
 
 	if ( tr.startsolid || tr.allsolid )
 	{
+		if (!ent->pointAgainstWorld)
+			Log::Warn("MISSILE STARTSOLID");
 		tr.fraction = 0.0f;
 		VectorCopy( ent->r.currentOrigin, tr.endpos );
 	}
@@ -520,8 +524,9 @@ void G_RunMissile( gentity_t *ent )
 		}
 		else
 		{
+			// BUG: missile overlaps player and doesn't collide
 			trap_Trace( &tr, ent->r.currentOrigin, nullptr, nullptr, origin,
-			            passent, ent->clipmask, 0 );
+			            passent, ent->clipmask | 0x800, 0 );
 
 			if ( tr.fraction < 1.0f )
 			{
@@ -537,8 +542,9 @@ void G_RunMissile( gentity_t *ent )
 				}
 				else
 				{
+					// BUG: missile overlaps player and doesn't collide
 					trap_Trace( &tr, ent->r.currentOrigin, ent->r.mins, ent->r.maxs,
-					            origin, passent, CONTENTS_BODY, 0 );
+					            origin, passent, CONTENTS_BODY | 0x800, 0 );
 
 					if ( tr.fraction < 1.0f )
 					{

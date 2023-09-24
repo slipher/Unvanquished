@@ -343,6 +343,7 @@ static void G_WideTrace(
 	VectorNegate( maxs, mins );
 	halfDiagonal = VectorLength( maxs );
 
+	bool unreliable = false;
 	{
 		//glm::vec3 origin = VEC2GLM(ent->s.origin);
 		glm::vec3 origin = VEC2GLM(ent->client->ps.origin);
@@ -351,6 +352,7 @@ static void G_WideTrace(
 		glm::vec3 tmins = muzzle + VEC2GLM(mins);
 		glm::vec3 tmaxs = muzzle + VEC2GLM(maxs);
 		if (!inBox(tmins, tmaxs, pmins, pmaxs)) {
+			unreliable = true;
 			tmins.z = -1;
 			tmaxs.z = 1;
 			pmins.z = -2;
@@ -366,7 +368,7 @@ static void G_WideTrace(
 
 	// Trace box against entities
 	VectorMA( muzzle, range, forward, end );
-	trap_Trace( tr, &muzzle[ 0 ], mins, maxs, end, ent->s.number, CONTENTS_BODY, 0 );
+	trap_Trace( tr, &muzzle[ 0 ], mins, maxs, end, ent->s.number, CONTENTS_BODY | unreliable * 0x800, 0 );
 
 	if ( tr->entityNum != ENTITYNUM_NONE )
 	{

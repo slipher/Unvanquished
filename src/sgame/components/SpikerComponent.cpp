@@ -165,7 +165,7 @@ bool SpikerComponent::SafeToShoot(glm::vec3 direction) {
 	for (float traceSize : {missileSize, missileSize * SAFETY_TRACE_INFLATION}) {
 		mins[0] = mins[1] = mins[2] = -traceSize;
 		maxs[0] = maxs[1] = maxs[2] =  traceSize;
-		trap_Trace( &trace, entity.oldEnt->s.origin, mins, maxs, &end[0], entity.oldEnt->num(), ma->clipmask, 0 );
+		trap_Trace( &trace, entity.oldEnt->s.origin, mins, maxs, &end[0], entity.oldEnt->num(), ma->clipmask | 0x800, 0 );
 		gentity_t* hit = &g_entities[trace.entityNum];
 
 		if (hit && G_OnSameTeam(entity.oldEnt, hit)) {

@@ -1747,7 +1747,9 @@ static bool FindRoomForClassChangeVertically(
 	// before starting the real trace
 	VectorCopy( newOrigin, temp );
 	temp[ 2 ] += nudgeHeight;
-	trap_Trace( &tr, newOrigin, toMins, toMaxs, temp, ent->num(), MASK_PLAYERSOLID, 0 );
+	// there are both good and bad startsolid cases here. if we overlapped the ceiling then we should immediately abort
+	// but if there was a low obstacle to the side we could move above it as desired
+	trap_Trace( &tr, newOrigin, toMins, toMaxs, temp, ent->num(), MASK_PLAYERSOLID | 0x800, 0 );
 
 	if ( tr.fraction == 0.0f )
 	{
@@ -1757,7 +1759,7 @@ static bool FindRoomForClassChangeVertically(
 	temp[ 2 ] = tr.endpos[ 2 ];
 
 	// trace down to the ground so that we can evolve on slopes
-	trap_Trace( &tr, temp, toMins, toMaxs, newOrigin, ent->num(), MASK_PLAYERSOLID, 0 );
+	trap_Trace( &tr, temp, toMins, toMaxs, newOrigin, ent->num(), MASK_PLAYERSOLID | 0x800, 0 );
 	VectorCopy( tr.endpos, newOrigin );
 
 	// make REALLY sure
@@ -1799,7 +1801,7 @@ static bool FindRoomForClassChangeLaterally(
 		VectorMA( origin, distance, delta, start_point );
 		trap_Trace( &trace, start_point, toMins, toMaxs,
 				origin, ent->num(),
-				MASK_PLAYERSOLID, 0 );
+				MASK_PLAYERSOLID | 0x800, 0 );
 		if ( trace.fraction == 0.0f )
 		{
 			continue;

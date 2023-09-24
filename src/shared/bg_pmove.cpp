@@ -2126,8 +2126,9 @@ static void PM_CheckLadder()
 
 	VectorMA( pm->ps->origin, 1.0f, forward, end );
 
+	//TODO way too much nonsense runs in pmove for dead players...
 	pm->trace( &trace, pm->ps->origin, pm->mins, pm->maxs, end, pm->ps->clientNum,
-	           MASK_PLAYERSOLID, 0 );
+	           MASK_PLAYERSOLID | (pm->ps->pm_type == PM_DEAD ? 0x800 : 0), 0 );
 
 	pml.ladder = ( trace.fraction < 1.0f ) && ( trace.surfaceFlags & SURF_LADDER );
 }

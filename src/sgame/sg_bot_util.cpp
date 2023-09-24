@@ -1169,8 +1169,10 @@ void BotTargetToRouteTarget( const gentity_t *self, botTarget_t target, botRoute
 		glm::vec3 invNormal = { 0, 0, -1 };
 		glm::vec3 targetPos = target.getPos();
 		glm::vec3 end = targetPos + 600.f * invNormal;
+		// the "overhead" on a crouching player is more or less harmless although it could THEORETICALLY prevent a trace from an airborne ducked player right under something from going down a little (due to allsolid)
+		int wow = entType == entityType_t::ET_PLAYER && target.getTargetedEntity()->client->ps.pm_flags & PMF_DUCKED ? 0x800 : 0;
 		trap_Trace( &trace, targetPos, mins, maxs, end, target.getTargetedEntity()->num(),
-		            CONTENTS_SOLID | CONTENTS_PLAYERCLIP, MASK_ENTITY );
+		            CONTENTS_SOLID | CONTENTS_PLAYERCLIP | wow, MASK_ENTITY );
 		routeTarget->setPos( VEC2GLM( trace.endpos ) );
 	}
 
@@ -1384,7 +1386,7 @@ bool BotTargetInAttackRange( const gentity_t *self, botTarget_t target )
 	maxs = {  width,  width,  width };
 	mins = { -width, -width, -height };
 
-	trap_Trace( &trace, muzzle, mins, maxs, targetPos, self->num(), MASK_SHOT, 0 );
+	trap_Trace( &trace, muzzle, mins, maxs, targetPos, self->num(), MASK_SHOT | ( (self->client->ps.weapon <= WP_ALEVEL4) * 0x800 ), 0 );
 
 	gentity_t const* hit = &g_entities[trace.entityNum];
 	bool hitEnemy = not ( G_OnSameTeam( self, hit ) || G_Team( hit ) == TEAM_NONE );
