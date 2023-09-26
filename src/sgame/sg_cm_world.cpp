@@ -881,7 +881,6 @@ void G_CM_Trace( trace_t *results, const vec3_t start, const vec3_t mins2, const
 	clip.contentmask = contentmask;
 	clip.skipmask = skipmask;
 	clip.start = start;
-//  VectorCopy( clip.trace.endpos, clip.end );
 	VectorCopy( end, clip.end );
 	clip.mins = mins;
 	clip.maxs = maxs;
@@ -897,11 +896,11 @@ void G_CM_Trace( trace_t *results, const vec3_t start, const vec3_t mins2, const
 		if ( end[ i ] > start[ i ] )
 		{
 			clip.boxmins[ i ] = clip.start[ i ] + clip.mins[ i ] - 1;
-			clip.boxmaxs[ i ] = clip.end[ i ] + clip.maxs[ i ] + 1;
+			clip.boxmaxs[ i ] = clip.trace.endpos[ i ] + clip.maxs[ i ] + 1;
 		}
 		else
 		{
-			clip.boxmins[ i ] = clip.end[ i ] + clip.mins[ i ] - 1;
+			clip.boxmins[ i ] = clip.trace.endpos[ i ] + clip.mins[ i ] - 1;
 			clip.boxmaxs[ i ] = clip.start[ i ] + clip.maxs[ i ] + 1;
 		}
 	}
