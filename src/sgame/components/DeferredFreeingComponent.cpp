@@ -29,6 +29,9 @@ DeferredFreeingComponent::DeferredFreeingComponent(Entity &entity)
 {}
 
 void DeferredFreeingComponent::HandleFreeAt(int freeTime) {
+	if (this->freeTime != DONT_FREE) {
+		Log::Warn("FreeAt called more than once for entity: %s", etos(entity.oldEnt));
+	}
 	this->freeTime = freeTime;
 }
 

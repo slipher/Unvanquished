@@ -35,7 +35,7 @@ class DeferredFreeingComponent: public DeferredFreeingComponentBase {
 		enum freeTime_t {
 			DONT_FREE,
 			FREE_BEFORE_THINKING,
-			FREE_AFTER_THINKING
+			FREE_AFTER_THINKING,
 		};
 
 		// ///////////////////// //

@@ -11,6 +11,8 @@ ThinkingComponent::ThinkingComponent(Entity& entity, DeferredFreeingComponent& r
 {}
 
 void ThinkingComponent::Think() {
+	ASSERT(!entity.oldEnt->freeAfterEvent);
+
 	int time = level.time;
 
 	if (lastThinkRound == time) {
