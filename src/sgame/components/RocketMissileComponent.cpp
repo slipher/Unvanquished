@@ -33,8 +33,10 @@ Maryland 20850 USA.
 */
 #include "RocketMissileComponent.h"
 
-RocketMissileComponent::RocketMissileComponent(Entity& entity, MissileComponent& r_MissileComponent)
-	: RocketMissileComponentBase(entity, r_MissileComponent)
+RocketMissileComponent::RocketMissileComponent(
+		Entity& entity, gentity_t* target, MissileComponent& r_MissileComponent)
+	: RocketMissileComponentBase(entity, target, r_MissileComponent)
+	, target_(target)
 {}
 
 void RocketMissileComponent::HandleMissileSteer() {
@@ -43,14 +45,14 @@ void RocketMissileComponent::HandleMissileSteer() {
 	gentity_t* self = entity.oldEnt;
 
 	// Don't turn anymore if the target is dead or gone
-	if (!self->target)
+	if (!target_)
 	{
 		return;
 	}
 
 	// Calculate current and target direction.
 	VectorNormalize2(self->s.pos.trDelta, currentDir);
-	VectorSubtract(self->target->r.currentOrigin, self->r.currentOrigin, targetDir);
+	VectorSubtract(target_->r.currentOrigin, self->r.currentOrigin, targetDir);
 	VectorNormalize(targetDir);
 
 	// Don't turn anymore after the target was passed.

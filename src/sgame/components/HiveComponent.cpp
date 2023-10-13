@@ -115,9 +115,9 @@ void HiveComponent::Fire(Entity& target) {
 	HiveMissileEntity::Params params;
 	params.oldEnt = m;
 	params.Missile_attributes = BG_Missile(MIS_HIVE);
+	params.HiveMissile_target = target.oldEnt;
 	m->entity = new HiveMissileEntity{ params };
 	G_SetUpMissile(m, entity.oldEnt, &origin[0], &dirToTarget[0]);
-	m->target = target.oldEnt;
 
 	G_SetBuildableAnim(entity.oldEnt, BANIM_ATTACK1, false);
 }

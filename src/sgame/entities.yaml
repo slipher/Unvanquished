@@ -109,12 +109,16 @@ components:
             Thinking:
 
     RocketMissile:
+        parameters:
+            target: gentity_t*
         requires:
             Missile:
         messages:
             - MissileSteer
 
     HiveMissile:
+        parameters:
+            target: gentity_t*
         requires:
             Missile:
         messages:

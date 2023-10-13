@@ -269,9 +269,9 @@ void RocketpodComponent::Shoot(const glm::vec3& direction) {
 	RocketMissileEntity::Params params;
 	params.oldEnt = m;
 	params.Missile_attributes = BG_Missile(MIS_ROCKET);
+	params.RocketMissile_target = target->oldEnt;
 	m->entity = new RocketMissileEntity{ params };
 	G_SetUpMissile(m, entity.oldEnt, entity.oldEnt->s.pos.trBase, &direction[0]);
-	m->target = target->oldEnt;
 
 	lastShot = level.time;
 }

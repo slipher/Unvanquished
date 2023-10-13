@@ -35,8 +35,10 @@ Maryland 20850 USA.
 #include "HiveMissileComponent.h"
 #include "sgame/Entities.h"
 
-HiveMissileComponent::HiveMissileComponent(Entity& entity, MissileComponent& r_MissileComponent)
-	: HiveMissileComponentBase(entity, r_MissileComponent)
+HiveMissileComponent::HiveMissileComponent(
+		Entity& entity, gentity_t* target, MissileComponent& r_MissileComponent)
+	: HiveMissileComponentBase(entity, target, r_MissileComponent)
+	, target_(target)
 {}
 
 void HiveMissileComponent::HandleMissileSteer() {
@@ -47,7 +49,7 @@ void HiveMissileComponent::HandleMissileSteer() {
 	float     d, nearest;
 	gentity_t* self = entity.oldEnt;
 
-	nearest = DistanceSquared(self->r.currentOrigin, self->target->r.currentOrigin);
+	nearest = DistanceSquared(self->r.currentOrigin, target_->r.currentOrigin);
 
 	//find the closest human
 	for (i = 0; i < MAX_CLIENTS; i++)
@@ -66,12 +68,12 @@ void HiveMissileComponent::HandleMissileSteer() {
 			if (tr.entityNum != ENTITYNUM_WORLD)
 			{
 				nearest = d;
-				self->target = ent;
+				target_ = ent;
 			}
 		}
 	}
 
-	VectorSubtract(self->target->r.currentOrigin, self->r.currentOrigin, dir);
+	VectorSubtract(target_->r.currentOrigin, self->r.currentOrigin, dir);
 	VectorNormalize(dir);
 
 	//change direction towards the player
