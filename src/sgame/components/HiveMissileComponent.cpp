@@ -49,7 +49,10 @@ void HiveMissileComponent::HandleMissileSteer() {
 	float     d, nearest;
 	gentity_t* self = entity.oldEnt;
 
-	nearest = DistanceSquared(self->r.currentOrigin, target_->r.currentOrigin);
+	// If the target has died, the entity ref will be invalidated after a second or two
+	nearest = target_
+		? DistanceSquared(self->r.currentOrigin, target_->r.currentOrigin)
+		: HUGE_QFLT;
 
 	//find the closest human
 	for (i = 0; i < MAX_CLIENTS; i++)
@@ -73,12 +76,14 @@ void HiveMissileComponent::HandleMissileSteer() {
 		}
 	}
 
-	VectorSubtract(target_->r.currentOrigin, self->r.currentOrigin, dir);
-	VectorNormalize(dir);
+	if (target_) {
+		VectorSubtract(target_->r.currentOrigin, self->r.currentOrigin, dir);
+		VectorNormalize(dir);
 
-	//change direction towards the player
-	VectorScale(dir, HIVE_SPEED, self->s.pos.trDelta);
-	SnapVector(self->s.pos.trDelta);  // save net bandwidth
-	VectorCopy(self->r.currentOrigin, self->s.pos.trBase);
-	self->s.pos.trTime = level.time;
+		//change direction towards the player
+		VectorScale(dir, HIVE_SPEED, self->s.pos.trDelta);
+		SnapVector(self->s.pos.trDelta);  // save net bandwidth
+		VectorCopy(self->r.currentOrigin, self->s.pos.trBase);
+		self->s.pos.trTime = level.time;
+	}
 }
