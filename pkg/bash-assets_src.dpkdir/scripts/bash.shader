@@ -17,3 +17,13 @@ bash/crate-box-orange
 		normalMap   models/vil_p_crate06_n
 	}
 }
+
+bash/crate-box-green
+{
+	qer_editorImage models/crate-green
+	imageMinDimension 128
+	{
+		diffuseMap  models/crate-green
+		normalMap   models/vil_p_crate06_n
+	}
+}

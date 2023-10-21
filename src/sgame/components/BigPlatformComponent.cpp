@@ -16,6 +16,13 @@ static void UseCrate(gentity_t* crate, gentity_t* player, gentity_t*)
 	G_FreeEntity(crate);
 }
 
+static void GreenCrate_touch(gentity_t* self, gentity_t* other)
+{
+	if (!other->client) return;
+
+	self->entity->Get<MissileComponent>()->Explode();
+}
+
 BigPlatformComponent::BigPlatformComponent(Entity& entity, HumanBuildableComponent& r_HumanBuildableComponent)
 	: BigPlatformComponentBase(entity, r_HumanBuildableComponent)
 {
@@ -35,12 +42,26 @@ static gentity_t *SpawnDumbMissileRestingCrate( missile_t missile, gentity_t *pa
 	return m;
 }
 
+static gentity_t *SpawnDumbMissileGreenCrate( missile_t missile, gentity_t *parent, const glm::vec3 &start, const glm::vec3 &dir )
+{
+	gentity_t *m = G_NewEntity( HAS_CBSE );
+	GreenCrateEntity::Params params;
+	params.oldEnt = m;
+	params.Health_maxHealth = 5;
+	params.Missile_attributes = BG_Missile( missile );
+	m->entity = new GreenCrateEntity{ params };
+	G_SetUpMissile( m, parent, GLM4READ( start ), GLM4READ( dir ) );
+	return m;
+}
+
 void BigPlatformComponent::Bounds(vec3_t mins, vec3_t maxs)
 {
 	BG_BuildableBoundingBox(BA_H_BIGPLATFORM, mins, maxs);
 	VectorAdd(mins, entity.oldEnt->s.origin, mins);
 	VectorAdd(maxs, entity.oldEnt->s.origin, maxs);
 }
+
+static int seed;
 
 static void TryAddCrate(const glm::vec3& location)
 {
@@ -53,11 +74,20 @@ static void TryAddCrate(const glm::vec3& location)
 	if (trace.fraction < 1)
 		return;
 
-	glm::vec3 velocity{0, 0, -0.01};
-	// EF_NO_BOUNCE_SOUND to distinguish crate sitting on ground from a throw one
-	gentity_t* crate = SpawnDumbMissileRestingCrate(MIS_CRATE, &g_entities[ENTITYNUM_NONE], location, velocity);
-	crate->s.eFlags |= EF_NO_BOUNCE_SOUND | EF_BOUNCE_HALF;
-	crate->use = UseCrate;
+	float crateTypeChoice = Q_random(&seed);
+	if (crateTypeChoice < 0.2) {
+		glm::vec3 velocity{0, 0, -0.01};
+		// EF_NO_BOUNCE_SOUND to distinguish crate sitting on ground from a throw one
+		gentity_t* crate = SpawnDumbMissileGreenCrate(MIS_GREEN_CRATE, &g_entities[ENTITYNUM_NONE], location, velocity);
+		crate->s.eFlags |= EF_NO_BOUNCE_SOUND | EF_BOUNCE_HALF;
+		crate->touch = GreenCrate_touch;
+	} else {
+		glm::vec3 velocity{0, 0, -0.01};
+		// EF_NO_BOUNCE_SOUND to distinguish crate sitting on ground from a throw one
+		gentity_t* crate = SpawnDumbMissileRestingCrate(MIS_CRATE, &g_entities[ENTITYNUM_NONE], location, velocity);
+		crate->s.eFlags |= EF_NO_BOUNCE_SOUND | EF_BOUNCE_HALF;
+		crate->use = UseCrate;
+	}
 }
 
 void BigPlatformComponent::AddCrates(int timeDelta)

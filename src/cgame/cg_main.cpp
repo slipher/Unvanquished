@@ -1023,6 +1023,7 @@ static void CG_RegisterClients()
 	}
 
 	cgs.media.crateOrangeSkin = trap_R_RegisterSkin( "models/crate-orange.skin" );
+	cgs.media.crateGreenSkin = trap_R_RegisterSkin("models/crate-green.skin");
 
 	// Borrow these variables for MD5 models so we don't have to create new ones.
 	cgs.media.larmourHeadSkin = trap_R_RegisterSkin( "models/players/human_base/body_helmet.skin" );

@@ -444,7 +444,7 @@ static void CG_Missile( centity_t *cent )
 		{
 			VectorCopy( es->pos.trDelta, velocity );
 		}
-		else if ( es->weapon == MIS_CRATE )
+		else if ( es->weapon == MIS_CRATE || es->weapon == MIS_GREEN_CRATE )
 		{
 			// TODO use real x and y directions
 			velocity[0] = velocity[1] = 0;
@@ -564,6 +564,10 @@ static void CG_Missile( centity_t *cent )
 		if ( ma->number == MIS_CRATE )
 		{
 			ent.customSkin = cgs.media.crateOrangeSkin;
+		}
+		else if ( ma->number == MIS_GREEN_CRATE )
+		{
+			ent.customSkin = cgs.media.crateGreenSkin;
 		}
 		trap_R_AddRefEntityToScene( &ent );
 	}

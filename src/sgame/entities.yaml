@@ -78,6 +78,13 @@ components:
             Health:
             Thinking:
 
+    GreenCrate:
+        messages:
+            Die:
+        requires:
+            Health:
+            Thinking:
+
     #####################
     # Common Components #
     #####################
@@ -525,6 +532,11 @@ entities:
     RestingCrate:
         components:
             RestingCrate:
+            Missile:
+
+    GreenCrate:
+        components:
+            GreenCrate:
             Missile:
 
     Fire:

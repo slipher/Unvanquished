@@ -738,6 +738,7 @@ static const missileData_t bg_missilesData[] =
   { MIS_LCANNON2,     "lcannon2"     },
   { MIS_GRENADE,      "grenade"      },
   { MIS_CRATE,        "crate"        },
+  { MIS_GREEN_CRATE,  "greencrate"   },
   { MIS_FIREBOMB,     "firebomb"     },
   { MIS_FIREBOMB_SUB, "firebomb_sub" },
   { MIS_HIVE,         "hive"         },
