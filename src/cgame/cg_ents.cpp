@@ -668,6 +668,11 @@ static void CG_Fire( centity_t *cent )
 	}
 }
 
+static void DrawHealthItem( const centity_t *cent )
+{
+	CG_DrawSphere( cent->currentState.origin, 5, cgs.media.yellowBuildShader, Color::White );
+}
+
 #define FLARE_OFF      0
 #define FLARE_NOFADE   1
 #define FLARE_TIMEFADE 2
@@ -1231,7 +1236,7 @@ static void CG_AddCEntity( centity_t *cent )
 			break;
 
 		case entityType_t::ET_FIRE:
-			CG_Fire( cent );
+			DrawHealthItem( cent );
 			break;
 
 		case entityType_t::ET_PARTICLE_SYSTEM:

@@ -6,6 +6,8 @@
 #define MAX_PLAYERS 4
 
 static Cvar::Cvar<int> crateInterval("bash_crateInterval", "interval in ms for adding crates", Cvar::NONE, 1000);
+static Cvar::Cvar<int> healthItemInterval(
+	"bash_healthItemInterval", "interval in ms for adding health items", Cvar::NONE, 2777);
 
 static void UseCrate(gentity_t* crate, gentity_t* player, gentity_t*)
 {
@@ -27,6 +29,7 @@ BigPlatformComponent::BigPlatformComponent(Entity& entity, HumanBuildableCompone
 	: BigPlatformComponentBase(entity, r_HumanBuildableComponent)
 {
 	REGISTER_THINKER(AddCrates, ThinkingComponent::SCHEDULER_AVERAGE, crateInterval.Get());
+	REGISTER_THINKER(AddHealthItems, ThinkingComponent::SCHEDULER_AVERAGE, healthItemInterval.Get());
 	entity.oldEnt->flags |= FL_GODMODE;
 }
 
@@ -90,6 +93,29 @@ static void TryAddCrate(const glm::vec3& location)
 	}
 }
 
+static void TryAddHealthItem(const vec3_t location)
+{
+	trace_t trace;
+	vec3_t mins{-5, -5, -5};
+	vec3_t maxs{5, 5, 5};
+	trap_Trace(&trace, location, mins, maxs, location, ENTITYNUM_NONE, MASK_ALL, 0);
+	if (trace.fraction != 1.0f)
+		return;
+
+	gentity_t* item = G_NewEntity(HAS_CBSE);
+	item->classname = BG_strdup("healthItem");
+	item->s.eType = entityType_t::ET_FIRE;
+
+	HealthItemEntity::Params params;
+	params.oldEnt = item;
+	item->entity = new HealthItemEntity(params);
+
+	VectorCopy(mins, item->r.mins);
+	VectorCopy(maxs, item->r.maxs);
+	G_SetOrigin(item, VEC2GLM(location));
+	trap_LinkEntity(item);
+}
+
 void BigPlatformComponent::AddCrates(int timeDelta)
 {
 	vec3_t unused, platformMins, platformMaxs, crateMins;
@@ -101,6 +127,19 @@ void BigPlatformComponent::AddCrates(int timeDelta)
 	                 platformMins[1] + ylerp * (platformMaxs[1] - platformMins[1]),
 	                 platformMaxs[2] - crateMins[2] + 3 };
 	TryAddCrate(location);
+}
+
+void BigPlatformComponent::AddHealthItems(int)
+{
+	vec3_t platformMins, platformMaxs;
+	Bounds(platformMins, platformMaxs);
+	float xlerp = 0.1 + random() * 0.8;
+	float ylerp = 0.1 + random() * 0.8;
+	float itemZmin = -5;
+	vec3_t location{ platformMins[0] + xlerp * (platformMaxs[0] - platformMins[0]),
+					 platformMins[1] + ylerp * (platformMaxs[1] - platformMins[1]),
+					 platformMaxs[2] - itemZmin + 4.0f };
+	TryAddHealthItem(location);
 }
 
 void BigPlatformComponent::Place(gentity_t* player, int position)

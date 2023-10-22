@@ -26,6 +26,7 @@ class BigPlatformComponent: public BigPlatformComponentBase {
 
 	private:
 		void AddCrates(int timeDelta);
+		void AddHealthItems(int timeDelta);
 		void Countdown(int timeDelta);
 		void Place(gentity_t* player, int position);
 		void ImmobilizePlayers(int timeDelta);
