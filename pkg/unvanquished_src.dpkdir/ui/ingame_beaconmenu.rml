@@ -45,6 +45,7 @@
 				if idx > #beacons then return end
 				Cmd.exec("beacon " .. beacons[idx][2])
 				Events.pushcmd("hide ingame_beaconmenu")
+				event:StopPropagation()
 			end
 			function BeaconHover(document, idx)
 				ClearBeaconInfo(document)
@@ -73,7 +74,7 @@
 			end
 		</script>
 	</head>
-	<body id="ingame_beaconmenu" class="circlemenu" onkeydown="CirclemenuHandleKey(event, document, BeaconClick)" onshow="CloseOtherCirclemenus(event) BuildBeaconMenu(document)">
+	<body id="ingame_beaconmenu" class="circlemenu" onkeydown="CirclemenuHandleKey(event, document, BeaconClick)" onshow="CloseOtherCirclemenus(event) BuildBeaconMenu(document)" onclick="document:Hide()">
 		<tabset class="circlemenu">
 			<tab><translate>Beacons</translate></tab>
 			<panel>

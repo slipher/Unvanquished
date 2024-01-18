@@ -99,6 +99,7 @@
 			Cmd.exec("build " .. data[2])
 			Events.pushcmd("hide alien_build")
 		end
+		event:StopPropagation()
 	end
 	function AlienBuildableHover(document, idx)
 		buildable = alien_buildables[idx]
@@ -121,7 +122,7 @@
 	end
 </script>
 </head>
-<body id="alien_build" class="circlemenu alien" onkeydown="CirclemenuHandleKey(event, document, AlienBuildableClick)" onshow="CloseOtherCirclemenus(event) BuildAlienBuildMenu(document)">
+<body id="alien_build" class="circlemenu alien" onkeydown="CirclemenuHandleKey(event, document, AlienBuildableClick)" onshow="CloseOtherCirclemenus(event) BuildAlienBuildMenu(document)" onclick="document:Hide()">
 <tabset class="circlemenu">
 <tab><translate>Build</translate></tab>
 <panel>
