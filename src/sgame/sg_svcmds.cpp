@@ -81,6 +81,40 @@ public:
 };
 static TraceCmd traceRegistration;
 
+class DeltaAnglesCmd : public Cmd::StaticCmd
+{
+public:
+	DeltaAnglesCmd() : StaticCmd( "addDeltaAngles", 0, "perturb a client's view angles (for debugging)" ) {}
+	void Run( const Cmd::Args& args ) const override
+	{
+		vec3_t deltas{};
+
+		switch ( args.Argc() )
+		{
+		case 5:
+			if ( !Cvar::ParseCvarValue( args.Argv( 4 ), deltas[ ROLL ] ) ) break;
+			DAEMON_FALLTHROUGH;
+		case 4:
+			if ( !Cvar::ParseCvarValue( args.Argv( 3 ), deltas[ YAW ] ) ) break;
+			DAEMON_FALLTHROUGH;
+		case 3:
+			if ( !Cvar::ParseCvarValue( args.Argv( 2 ), deltas[ PITCH ] ) ) break;
+
+			int client = G_ClientNumberFromString( args.Argv( 1 ).c_str(), nullptr, 0 );
+			if ( client < 0 ) break;
+
+			for ( int i = 0; i < 3; i++ )
+			{
+				g_clients[ client ].ps.delta_angles[ i ] += ANGLE2SHORT( deltas[ i ] );
+			}
+			return;
+		}
+
+		PrintUsage( args, "<client> <pitch> [yaw [roll]]" );
+	}
+};
+static DeltaAnglesCmd deltaAnglesRegistration;
+
 class ShowBehaviorCmd : public Cmd::StaticCmd
 {
 public:
