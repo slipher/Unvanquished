@@ -238,6 +238,21 @@ public:
 			return;
 		}
 
+		float width, height;
+		if ( args.Argc() == 2 )
+		{
+			width = height = 100;
+		}
+		else if ( args.Argc() == 4 && Cvar::ParseCvarValue( args.Argv( 2 ), width )
+			&& Cvar::ParseCvarValue( args.Argv( 3 ), height ) )
+		{
+		}
+		else
+		{
+			Print("usage");
+			return;
+		}
+
 		cg.hTestShader = trap_R_RegisterShader( args.Argv( 1 ).c_str(), RSF_DEFAULT );
 		if ( !cg.hTestShader )
 		{
@@ -246,16 +261,16 @@ public:
 		}
 
 		glm::vec3 center = VEC2GLM( cg.refdef.vieworg ) + 200.0f * VEC2GLM( cg.refdef.viewaxis[ 0 ] );
-		glm::vec3 left = 50.0f * VEC2GLM( cg.refdef.viewaxis[ 1 ] );
-		glm::vec3 up = 50.0f * VEC2GLM( cg.refdef.viewaxis[ 2 ] );
+		glm::vec3 left = 0.5f * width * VEC2GLM( cg.refdef.viewaxis[ 1 ] );
+		glm::vec3 up = 0.5f * height * VEC2GLM( cg.refdef.viewaxis[ 2 ] );
 		VectorCopy( center + left + up, cg.testShaderPoly[ 0 ].xyz );
 		VectorCopy( center - left + up, cg.testShaderPoly[ 1 ].xyz );
 		VectorCopy( center - left - up, cg.testShaderPoly[ 2 ].xyz );
 		VectorCopy( center + left - up, cg.testShaderPoly[ 3 ].xyz );
 		Vector2Set( cg.testShaderPoly[ 0 ].st, 0, 0 );
-		Vector2Set( cg.testShaderPoly[ 1 ].st, 1, 0 );
-		Vector2Set( cg.testShaderPoly[ 2 ].st, 1, 1 );
-		Vector2Set( cg.testShaderPoly[ 3 ].st, 0, 1 );
+		Vector2Set( cg.testShaderPoly[ 1 ].st, 3, 0 );
+		Vector2Set( cg.testShaderPoly[ 2 ].st, 3, 3 );
+		Vector2Set( cg.testShaderPoly[ 3 ].st, 0, 3 );
 
 		for ( polyVert_t &v : cg.testShaderPoly )
 		{
