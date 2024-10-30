@@ -38,6 +38,7 @@ Maryland 20850 USA.
 // TODO: Convert all these commands to Cmd::StaticCmd (which works for these, but not networked commands)
 
 #include "common/Common.h"
+#include "common/cm/cm_public.h"
 #include "sg_local.h"
 #include "botlib/bot_api.h"
 
@@ -190,6 +191,158 @@ static void Svcmd_EntityFire_f()
 	G_CallEntity(selection, &call);
 }
 
+class FloodFillCmd : public Cmd::StaticCmd
+{
+	using octpt = std::array<int, 3>;
+	struct oct {
+		bool allAccessible; // set on creation
+		std::array<std::unique_ptr<oct>, 8> children;
+	};
+
+	glm::vec3 gridOrigin_;
+	float gridDist_;
+	vec3_t trMins_, trMaxs_;
+	int dim_;
+	int d_;
+
+	void ToWorld(octpt p, vec3_t &out)
+	{
+		for (int i = 0; i < 3; i++)
+			out[i] = gridOrigin_[i] + p[i] * gridDist_;
+	}
+
+	bool TraceBlocked(octpt a, octpt b)
+	{
+		vec3_t a2, b2;
+		ToWorld(a, a2);
+		ToWorld(b, b2);
+		trace_t tr;
+		CM_BoxTrace(&tr, a2, b2, trMins_, trMaxs_, 0, CONTENTS_SOLID, 0, traceType_t::TT_AABB);
+		return tr.fraction < 1.0f;
+	}
+
+	bool CubeBlocked(octpt min, int d)
+	{
+		vec3_t center;
+		ToWorld(min, center);
+		float edgeCenterDist = 0.5f * (d - 1) * gridDist_;
+		for (float& c : center)
+			c += edgeCenterDist;
+		vec3_t mins, maxs;
+		maxs[0] = maxs[1] = maxs[2] = trMaxs_[0] + edgeCenterDist;
+		mins[0] = mins[1] = mins[2] = -maxs[0];
+		trace_t tr;
+		CM_BoxTrace(&tr, center, center, mins, maxs, 0, CONTENTS_SOLID, 0, traceType_t::TT_AABB);
+		return tr.fraction < 1.0f;
+	}
+
+	void Go(octpt origin)
+	{
+		std::unique_ptr<oct> tree;
+		std::vector<octpt> q{ origin };
+		while(!q.empty()) {
+			octpt p = q.back();
+			q.pop_back();
+			for (int c : p) {
+				if (c < 0 || c >= dim_) {
+					vec3_t p2;
+					ToWorld(p, p2);
+					Print("escaped to %s", vtos(p2));
+					return;
+				}
+			}
+
+			octpt tOrg{};
+			auto* t = &tree;
+			int d = d_;
+			for(;;) {
+				if (!*t) {
+					(*t).reset(new oct);
+					(*t)->allAccessible = d == 1 || !CubeBlocked(tOrg, d);
+					if ((*t)->allAccessible) {
+						for (int i = 0; i < d; i++) {
+							for (int j = 0; j < d; j++) {
+								octpt edge[3] = {
+									{ tOrg[0], tOrg[1] + i, tOrg[2] + j },
+									{ tOrg[0] + i, tOrg[1], tOrg[2] + j },
+									{ tOrg[0] + i, tOrg[1] + j, tOrg[2] },
+								};
+								for (int k = 0; k < 3; k++) {
+									octpt out = edge[k];
+									out[k] -= 1;
+									if (!TraceBlocked(edge[k], out))
+										q.push_back(out);
+									edge[k][k] += d - 1;
+									out[k] += d + 1;
+									if (!TraceBlocked(edge[k], out))
+										q.push_back(out);
+								}
+							}
+						}
+
+						break;
+					}
+				} else if ((*t)->allAccessible) {
+					break; //already visited
+				}
+
+				int j = 0;
+				d >>= 1;
+				for (int i = 0; i < 3; i++) {
+					if (p[i] & d) {
+						p[i] ^= d;
+						tOrg[i] |= d;
+						j |= 1 << i;
+					}
+				}
+				t = &(*t)->children[j];
+			}
+		}
+		Log::Notice("no escape found");
+	}
+
+	void FloodFill(glm::vec3 origin, float traceHalfEdge, float gridDist, float worldHalfEdge)
+	{
+		trMins_[0] = trMins_[1] = trMins_[2] = -traceHalfEdge;
+		trMaxs_[0] = trMaxs_[1] = trMaxs_[2] = traceHalfEdge;
+		gridDist_ = gridDist;
+		int stepsBeforeEdge = static_cast<int>(worldHalfEdge / gridDist);
+		dim_ = 2 * stepsBeforeEdge + 1; // dim^3 included grid points
+		gridOrigin_ = origin - gridDist * stepsBeforeEdge;
+		d_ = 2;
+		while(d_ < dim_) d_ <<= 1;
+
+		octpt originp = {stepsBeforeEdge, stepsBeforeEdge, stepsBeforeEdge};
+		if (CubeBlocked(originp, 1)) {
+			Print("invalid - origin point occupied");
+			return;
+		}
+
+		Go(originp);
+	}
+
+public:
+	FloodFillCmd() : StaticCmd("floodfill", "test map for holes") {}
+
+	void Run(const Cmd::Args& args) const override
+	{
+		float traceHalfEdge, gridDist, worldHalfEdge;
+		glm::vec3 origin;
+		if (args.Argc() == 7 && Str::ToFloat(args.Argv(1), origin.x)
+		                     && Str::ToFloat(args.Argv(2), origin.y)
+		                     && Str::ToFloat(args.Argv(3), origin.z)
+		                     && Str::ToFloat(args.Argv(4), traceHalfEdge)
+		                     && Str::ToFloat(args.Argv(5), gridDist)
+		                     && Str::ToFloat(args.Argv(6), worldHalfEdge)) {
+			const_cast<FloodFillCmd *>(this)->FloodFill(origin, traceHalfEdge, gridDist, worldHalfEdge);
+		} else {
+			PrintUsage(args, "x y z t g w",
+				"Flood fills the world bounded by (x-w y-w z-w) and (x+w y+w z+w), starting from (x y z),\n"
+				"using a trace size mins (-t -t -t) maxs (t t t) and spacing between grid points g");
+		}
+	}
+};
+static FloodFillCmd floodFillRegistration;
 
 static inline void PrintEntityOverviewLine( gentity_t *entity )
 {
