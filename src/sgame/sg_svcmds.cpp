@@ -196,6 +196,7 @@ class FloodFillCmd : public Cmd::StaticCmd
 	using octpt = std::array<int, 3>;
 	struct oct {
 		bool allAccessible; // set on creation
+		int dist;
 		std::array<std::unique_ptr<oct>, 8> children;
 	};
 
@@ -209,6 +210,14 @@ class FloodFillCmd : public Cmd::StaticCmd
 	{
 		for (int i = 0; i < 3; i++)
 			out[i] = gridOrigin_[i] + p[i] * gridDist_;
+	}
+
+	bool InBounds(octpt p, int max)
+	{
+		for (int i = 0; i < 3; i++)
+			if (p[i] < 0 || p[i] >= max)
+				return false;
+		return true;
 	}
 
 	bool TraceBlocked(octpt a, octpt b)
@@ -236,20 +245,104 @@ class FloodFillCmd : public Cmd::StaticCmd
 		return tr.fraction < 1.0f;
 	}
 
+	struct LookupResult {
+		int d;
+		oct* t;
+	};
+	LookupResult LookUpPoint(oct* t, octpt p)
+	{
+		ASSERT(InBounds(p, d_));
+		octpt tOrg{};
+		int d = d_;
+		for (;;) {
+			int j = 0;
+			for (int i = 0; i < 3; i++) {
+				if (p[i] & d/2) {
+					p[i] ^= d/2;
+					tOrg[i] |= d/2;
+					j |= 1 << i;
+				}
+			}
+			if (!t->children[j]) {
+				return {d, t};
+			}
+			t = t->children[j].get();
+			d /= 2;
+		}
+	}
+
+	void Return(oct* root, int dist, octpt tOrg)
+	{
+		int d = 1;
+		while (dist > 0) {
+			int nextDist = dist;
+			int nextD;
+			octpt nextPoint;
+			for (int i = 0; i < d; i++) {
+				for (int j = 0; j < d; j++) {
+					octpt edge[3] = {
+						{ tOrg[0], tOrg[1] + i, tOrg[2] + j },
+						{ tOrg[0] + i, tOrg[1], tOrg[2] + j },
+						{ tOrg[0] + i, tOrg[1] + j, tOrg[2] },
+					};
+					for (int k = 0; k < 3; k++) {
+						octpt out = edge[k];
+						out[k] -= 1;
+						if (InBounds(out, d_)) {
+							auto r = LookUpPoint(root, out);
+							if (r.t->allAccessible && r.t->dist < nextDist && !TraceBlocked(edge[k], out)) {
+								nextDist = r.t->dist;
+								nextD = r.d;
+								nextPoint = out;
+							}
+						}
+						edge[k][k] += d - 1;
+						out[k] += d + 1;
+						if (InBounds(out, d_)) {
+							auto r = LookUpPoint(root, out);
+							if (r.t->allAccessible && r.t->dist < nextDist && !TraceBlocked(edge[k], out)) {
+								nextDist = r.t->dist;
+								nextD = r.d;
+								nextPoint = out;
+							}
+						}
+					}
+				}
+			}
+			if (nextDist >= dist) {
+				Print("lost breadcrumbs");
+				return;
+			}
+			dist = nextDist;
+			d = nextD;
+			for (int i = 0; i < 3; i++)
+				tOrg[i] = nextPoint[i] & -d;
+			vec3_t worldp;
+			ToWorld(tOrg, worldp);
+			float edgeCenterDist = 0.5f * (d - 1) * gridDist_;
+			for (float& c : worldp)
+				c += edgeCenterDist;
+			Print("%s (+/- %.0f)", vtos(worldp), edgeCenterDist);
+		}
+	}
+
 	void Go(octpt origin)
 	{
 		std::unique_ptr<oct> tree;
-		std::vector<octpt> q{ origin };
+		struct qentry {
+			octpt p;
+			oct* pred;
+		};
+		std::vector<qentry> q{ {origin, nullptr} };
 		while(!q.empty()) {
-			octpt p = q.back();
+			qentry qe = q.back();
 			q.pop_back();
-			for (int c : p) {
-				if (c < 0 || c >= dim_) {
-					vec3_t p2;
-					ToWorld(p, p2);
-					Print("escaped to %s", vtos(p2));
-					return;
-				}
+			if (!InBounds(qe.p, dim_)) {
+				vec3_t p2;
+				ToWorld(qe.p, p2);
+				Print("escaped to %s", vtos(p2));
+				Return(tree.get(), qe.pred->dist + 1, qe.p);
+				return;
 			}
 
 			octpt tOrg{};
@@ -260,6 +353,11 @@ class FloodFillCmd : public Cmd::StaticCmd
 					(*t).reset(new oct);
 					(*t)->allAccessible = d == 1 || !CubeBlocked(tOrg, d);
 					if ((*t)->allAccessible) {
+						if (!qe.pred)
+							(*t)->dist = 0;
+						else
+							(*t)->dist = qe.pred->dist + 1;
+
 						for (int i = 0; i < d; i++) {
 							for (int j = 0; j < d; j++) {
 								octpt edge[3] = {
@@ -271,11 +369,11 @@ class FloodFillCmd : public Cmd::StaticCmd
 									octpt out = edge[k];
 									out[k] -= 1;
 									if (!TraceBlocked(edge[k], out))
-										q.push_back(out);
+										q.push_back({ out, (*t).get() });
 									edge[k][k] += d - 1;
 									out[k] += d + 1;
 									if (!TraceBlocked(edge[k], out))
-										q.push_back(out);
+										q.push_back({ out, (*t).get() });
 								}
 							}
 						}
@@ -283,14 +381,15 @@ class FloodFillCmd : public Cmd::StaticCmd
 						break;
 					}
 				} else if ((*t)->allAccessible) {
+					(*t)->dist = std::min((*t)->dist, qe.pred->dist + 1);
 					break; //already visited
 				}
 
 				int j = 0;
 				d >>= 1;
 				for (int i = 0; i < 3; i++) {
-					if (p[i] & d) {
-						p[i] ^= d;
+					if (qe.p[i] & d) {
+						qe.p[i] ^= d;
 						tOrg[i] |= d;
 						j |= 1 << i;
 					}
