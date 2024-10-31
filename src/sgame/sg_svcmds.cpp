@@ -226,7 +226,7 @@ class FloodFillCmd : public Cmd::StaticCmd
 		ToWorld(a, a2);
 		ToWorld(b, b2);
 		trace_t tr;
-		CM_BoxTrace(&tr, a2, b2, trMins_, trMaxs_, 0, CONTENTS_SOLID, 0, traceType_t::TT_AABB);
+		CM_BoxTrace(&tr, a2, b2, trMins_, trMaxs_, 0, CONTENTS_SOLID | CONTENTS_PLAYERCLIP, 0, traceType_t::TT_AABB);
 		return tr.fraction < 1.0f;
 	}
 
@@ -241,7 +241,7 @@ class FloodFillCmd : public Cmd::StaticCmd
 		maxs[0] = maxs[1] = maxs[2] = trMaxs_[0] + edgeCenterDist;
 		mins[0] = mins[1] = mins[2] = -maxs[0];
 		trace_t tr;
-		CM_BoxTrace(&tr, center, center, mins, maxs, 0, CONTENTS_SOLID, 0, traceType_t::TT_AABB);
+		CM_BoxTrace(&tr, center, center, mins, maxs, 0, CONTENTS_SOLID | CONTENTS_PLAYERCLIP, 0, traceType_t::TT_AABB);
 		return tr.fraction < 1.0f;
 	}
 
@@ -290,7 +290,7 @@ class FloodFillCmd : public Cmd::StaticCmd
 						out[k] -= 1;
 						if (InBounds(out, d_)) {
 							auto r = LookUpPoint(root, out);
-							if (r.t->allAccessible && r.t->dist < nextDist && !TraceBlocked(edge[k], out)) {
+							if (r.t->allAccessible && r.t->dist < nextDist && !TraceBlocked(out, edge[k])) {
 								nextDist = r.t->dist;
 								nextD = r.d;
 								nextPoint = out;
@@ -300,7 +300,7 @@ class FloodFillCmd : public Cmd::StaticCmd
 						out[k] += d + 1;
 						if (InBounds(out, d_)) {
 							auto r = LookUpPoint(root, out);
-							if (r.t->allAccessible && r.t->dist < nextDist && !TraceBlocked(edge[k], out)) {
+							if (r.t->allAccessible && r.t->dist < nextDist && !TraceBlocked(out, edge[k])) {
 								nextDist = r.t->dist;
 								nextD = r.d;
 								nextPoint = out;
@@ -397,7 +397,7 @@ class FloodFillCmd : public Cmd::StaticCmd
 				t = &(*t)->children[j];
 			}
 		}
-		Log::Notice("no escape found");
+		Print("no escape found");
 	}
 
 	void FloodFill(glm::vec3 origin, float traceHalfEdge, float gridDist, float worldHalfEdge)
