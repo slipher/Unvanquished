@@ -2423,13 +2423,15 @@ G_RunFrame
 Advances the non-player objects in the world
 ================
 */
-Cvar::Cvar<std::string> drawPt("drawPt", "", 0, "");
-Cvar::Cvar<std::string> ptmins("ptmins", "", 0, "-1 -1 -1");
-Cvar::Cvar<std::string> ptmaxs("ptmaxs", "", 0, "1 1 1");
+Cvar::Modified<Cvar::Cvar<std::string>> drawPt("drawPt", "", 0, "");
+Cvar::Modified<Cvar::Cvar<std::string>> ptmins("ptmins", "", 0, "-1 -1 -1");
+Cvar::Modified<Cvar::Cvar<std::string>> ptmaxs("ptmaxs", "", 0, "1 1 1");
 
-Cvar::Cvar<int> surfPlan("surfPlan", "", 0, -1);
-Cvar::Cvar<int> surfSC("surfSC", "", 0, -1);
-Cvar::Cvar<int> brush("brush", "", 0, -1);
+Cvar::Modified<Cvar::Cvar<int>> surfPlan("surfPlan", "", 0, -1);
+Cvar::Modified<Cvar::Cvar<int>> surfSC("surfSC", "", 0, -1);
+Cvar::Modified<Cvar::Cvar<int>> brush("brush", "", 0, -1);
+Cvar::Modified<Cvar::Cvar<bool>> nonsolidBrushes("nonsolidBrushes", "", 0, false);
+Cvar::Modified<Cvar::Cvar<bool>> solidBrushes("solidBrushes", "", 0, false);
 void G_RunFrame(int levelTime)
 {
 	int        i;
@@ -2443,6 +2445,19 @@ void G_RunFrame(int levelTime)
 	dd.depthMask(true);
 
 	glm::vec3 org;
+
+	if (!drawPt.GetModifiedValue() &&
+	    !ptmins.GetModifiedValue() &&
+	    !ptmaxs.GetModifiedValue() &&
+	    !surfPlan.GetModifiedValue() &&
+	    !surfSC.GetModifiedValue() &&
+	    !brush.GetModifiedValue() &&
+	    !nonsolidBrushes.GetModifiedValue() &&
+	    !solidBrushes.GetModifiedValue())
+	{
+		goto no_dd;
+	}
+
 	if (3 == sscanf(drawPt.Get().c_str(), "%f %f %f", &org.x, &org.y, &org.z))
 	{
 		glm::vec3 mins, maxs;
@@ -2471,7 +2486,17 @@ void G_RunFrame(int levelTime)
 		DrawBrush(dd, cm.brushes[brush.Get()]);
 	}
 
+	for (int j = 0; j < cm.numBrushes; j++)
+	{
+		if ( cm.brushes[j].contents & CONTENTS_SOLID ? solidBrushes.Get() : nonsolidBrushes.Get() )
+		{
+			DrawBrush(dd, cm.brushes[j]);
+		}
+	}
+
 	dd.sendCommands();
+
+	no_dd:
 
 	// if we are waiting for the level to restart, do nothing
 	if ( level.restarted )
