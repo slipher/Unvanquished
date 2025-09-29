@@ -174,7 +174,7 @@ void BigPlatformComponent::StartRound(const std::vector<gentity_t*>& players)
 	}
 	playing_ = true;
 	CleanUp();
-	ASSERT_LE(players.size(), MAX_PLAYERS);
+	ASSERT_LE(int(players.size()), MAX_PLAYERS);
 	for (size_t i = 0; i < players.size(); i++) {
 		Place(players[i], i);
 		Cmd::PushArgs("devteam h");
