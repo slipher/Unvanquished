@@ -1,6 +1,6 @@
 selector
 {
-	condition !haveWeapon( WP_CRATE )
+	condition !haveWeapon( WP_CRATE ) && !haveWeapon( WP_INERT_CRATE )
 	{
 		action getCrate
 	}

@@ -444,7 +444,7 @@ static void CG_Missile( centity_t *cent )
 		{
 			VectorCopy( es->pos.trDelta, velocity );
 		}
-		else if ( es->weapon == MIS_CRATE || es->weapon == MIS_GREEN_CRATE )
+		else if ( es->weapon == MIS_CRATE || es->weapon == MIS_GREEN_CRATE || es->weapon == MIS_INERT_CRATE )
 		{
 			// TODO use real x and y directions
 			velocity[0] = velocity[1] = 0;

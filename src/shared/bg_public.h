@@ -611,6 +611,7 @@ enum weapon_t
 
   WP_BASH_FIRST,
   WP_CRATE = WP_BASH_FIRST,
+  WP_INERT_CRATE,
   WP_HANDS,
 
   // build weapons must remain in a block ← I'm not asking why but I can imagine
@@ -652,6 +653,7 @@ enum missile_t
 	MIS_GRENADE,
 	MIS_CRATE,
 	MIS_GREEN_CRATE,
+	MIS_INERT_CRATE,
 	MIS_FIREBOMB,
 	MIS_FIREBOMB_SUB,
 	MIS_HIVE,
@@ -1192,6 +1194,7 @@ enum meansOfDeath_t
   MOD_FLAMER_SPLASH,
   MOD_BURN,
   MOD_GRENADE,
+  MOD_CRATE,
   MOD_FIREBOMB,
   MOD_WEIGHT_H,
   MOD_WATER,

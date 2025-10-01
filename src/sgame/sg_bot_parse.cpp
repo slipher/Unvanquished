@@ -1553,6 +1553,7 @@ static void SetBehaviorTreeDefines()
 	D( WP_ABUILD );
 	D( WP_ABUILD2 );
 	D( WP_CRATE );
+	D( WP_INERT_CRATE );
 
 	// add teams
 	D( TEAM_ALIENS );

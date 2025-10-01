@@ -85,6 +85,13 @@ components:
             Health:
             Thinking:
 
+    InertCrate:
+        messages:
+            Die:
+        requires:
+            Health:
+            Thinking:
+
     HealthItem:
         requires:
             Thinking:
@@ -541,6 +548,11 @@ entities:
     GreenCrate:
         components:
             GreenCrate:
+            Missile:
+
+    InertCrate:
+        components:
+            InertCrate:
             Missile:
 
     HealthItem:

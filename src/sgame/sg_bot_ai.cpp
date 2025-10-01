@@ -938,7 +938,7 @@ static bool AimingAtEnemy( gentity_t *self, gentity_t *enemy )
 static Cvar::Cvar<float> crateRange("bash_crateAttackRange", "max enemy distance for bots to throw crate", Cvar::NONE, 90);
 AINodeStatus_t BotActionFightWithCrate(gentity_t* self, AIGenericNode_t* node)
 {
-	if ( self->client->ps.weapon != WP_CRATE )
+	if ( self->client->ps.weapon != WP_CRATE && self->client->ps.weapon != WP_INERT_CRATE )
 		return STATUS_FAILURE;
 
 	botMemory_t* mind = self->botMind;
@@ -1723,7 +1723,7 @@ AINodeStatus_t BotActionResetStuckTime( gentity_t *self, AIGenericNode_t* )
 
 AINodeStatus_t BotActionGetCrate( gentity_t *self, AIGenericNode_t* node )
 {
-	if ( self->client->ps.weapon == WP_CRATE )
+	if ( self->client->ps.weapon == WP_CRATE || self->client->ps.weapon == WP_INERT_CRATE )
 	{
 		return STATUS_SUCCESS;
 	}
@@ -1733,7 +1733,7 @@ AINodeStatus_t BotActionGetCrate( gentity_t *self, AIGenericNode_t* node )
 		gentity_t *best = nullptr;
 		float dist = std::numeric_limits<float>::max();
 
-		ForEntities<RestingCrateComponent>([&](Entity& crate, RestingCrateComponent&) {
+		auto CheckCrate = [&](Entity& crate, auto&) {
 			if (Entities::IsDead(crate)) return;
 			float d = G_Distance( self, crate.oldEnt );
 			if ( d < dist )
@@ -1741,7 +1741,9 @@ AINodeStatus_t BotActionGetCrate( gentity_t *self, AIGenericNode_t* node )
 				dist = d;
 				best = crate.oldEnt;
 			}
-		});
+		};
+		ForEntities<RestingCrateComponent>(CheckCrate);
+		ForEntities<InertCrateComponent>(CheckCrate);
 
 		botTarget_t target;
 		target = best;

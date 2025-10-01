@@ -1435,7 +1435,17 @@ void G_CalcMuzzlePoint( const gentity_t *self, const vec3_t forward, vec3_t muzz
 
 static void ThrowCrate(gentity_t* self)
 {
-	ASSERT_EQ(self->client->ps.weapon, WP_CRATE);
+	missile_t mis;
+	switch (self->client->ps.weapon) {
+	case WP_CRATE:
+		mis = MIS_CRATE;
+		break;
+	case WP_INERT_CRATE:
+		mis = MIS_INERT_CRATE;
+		break;
+	default:
+		ASSERT_UNREACHABLE();
+	}
 
 	glm::vec3 forward;
 	AngleVectors( VEC2GLM( self->client->ps.viewangles ), &forward, nullptr, nullptr );
@@ -1449,7 +1459,7 @@ static void ThrowCrate(gentity_t* self)
 	}
 	dir[2] = 0.5f;
 	dir = glm::normalize(dir);
-	G_SpawnDumbMissile( MIS_CRATE, self, muzzle, dir );
+	G_SpawnDumbMissile( mis, self, muzzle, dir );
 	self->client->ps.stats[STAT_WEAPON] = WP_HANDS;
 	G_ForceWeaponChange(self, WP_HANDS);
 }
@@ -1554,6 +1564,7 @@ void G_FireWeapon( gentity_t *self, weapon_t weapon, weaponMode_t weaponMode )
 					break;
 
 				case WP_CRATE:
+				case WP_INERT_CRATE:
 					ThrowCrate( self );
 					break;
 

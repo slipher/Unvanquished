@@ -53,6 +53,7 @@ static const char *const modNames[] =
 	"MOD_FLAMER_SPLASH",
 	"MOD_BURN",
 	"MOD_GRENADE",
+	"MOD_CRATE",
 	"MOD_FIREBOMB",
 	"MOD_WEIGHT_H",
 	"MOD_WATER",

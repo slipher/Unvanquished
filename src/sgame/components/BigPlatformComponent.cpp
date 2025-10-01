@@ -11,10 +11,19 @@ static Cvar::Cvar<int> healthItemInterval(
 
 static void UseCrate(gentity_t* crate, gentity_t* player, gentity_t*)
 {
-	if (player->client->ps.weapon == WP_CRATE)
+	if (player->client->ps.weapon != WP_HANDS)
 		return;
 	player->client->ps.stats[ STAT_WEAPON ] = WP_CRATE;
 	G_ForceWeaponChange( player, WP_CRATE );
+	G_FreeEntity(crate);
+}
+
+static void UseInertCrate(gentity_t* crate, gentity_t* player, gentity_t*)
+{
+	if (player->client->ps.weapon != WP_HANDS)
+		return;
+	player->client->ps.stats[ STAT_WEAPON ] = WP_INERT_CRATE;
+	G_ForceWeaponChange( player, WP_INERT_CRATE );
 	G_FreeEntity(crate);
 }
 
@@ -57,6 +66,18 @@ static gentity_t *SpawnDumbMissileGreenCrate( const glm::vec3 &start, const glm:
 	return m;
 }
 
+static gentity_t *SpawnDumbMissileInertCrate( const glm::vec3 &start, const glm::vec3 &dir )
+{
+	gentity_t *m = G_NewEntity( HAS_CBSE );
+	InertCrateEntity::Params params;
+	params.oldEnt = m;
+	params.Health_maxHealth = 15;
+	params.Missile_attributes = BG_Missile( MIS_INERT_CRATE );
+	m->entity = new InertCrateEntity{ params };
+	G_SetUpMissile( m, &g_entities[ENTITYNUM_NONE], GLM4READ( start ), GLM4READ( dir ) );
+	return m;
+}
+
 void BigPlatformComponent::Bounds(vec3_t mins, vec3_t maxs)
 {
 	BG_BuildableBoundingBox(BA_H_BIGPLATFORM, mins, maxs);
@@ -83,9 +104,12 @@ static void TryAddCrate(const glm::vec3& location)
 	if (crateTypeChoice < 0.2) {
 		crate = SpawnDumbMissileGreenCrate(location, velocity);
 		crate->touch = GreenCrate_touch;
-	} else {
+	} else if (crateTypeChoice < 0.4) {
 		crate = SpawnDumbMissileRestingCrate(location, velocity);
 		crate->use = UseCrate;
+	} else {
+		crate = SpawnDumbMissileInertCrate(location, velocity);
+		crate->use = UseInertCrate;
 	}
 	// EF_NO_BOUNCE_SOUND to distinguish crate sitting on ground from a thrown one
 	crate->s.eFlags |= EF_NO_BOUNCE_SOUND | EF_BOUNCE_HALF;

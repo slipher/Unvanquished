@@ -499,7 +499,7 @@ static bool CG_ParseWeaponFile( const char *filename, int weapon, weaponInfo_t *
 	wi->scale = 1.0f;
 
 	// TODO: detect skeletal model for both 1st and 3rd person
-	if (weapon == WP_CRATE) wi->md5 = true;
+	if (weapon == WP_CRATE || weapon == WP_INERT_CRATE) wi->md5 = true;
 
 	// read optional parameters
 	while ( 1 )

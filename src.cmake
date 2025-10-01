@@ -323,6 +323,8 @@ set(SGAMELIST
     ${GAMELOGIC_DIR}/sgame/components/ReactorComponent.h
     ${GAMELOGIC_DIR}/sgame/components/GreenCrateComponent.cpp
     ${GAMELOGIC_DIR}/sgame/components/GreenCrateComponent.h
+    ${GAMELOGIC_DIR}/sgame/components/InertCrateComponent.cpp
+    ${GAMELOGIC_DIR}/sgame/components/InertCrateComponent.h
     ${GAMELOGIC_DIR}/sgame/components/RestingCrateComponent.cpp
     ${GAMELOGIC_DIR}/sgame/components/RestingCrateComponent.h
     ${GAMELOGIC_DIR}/sgame/components/HealthItemComponent.cpp

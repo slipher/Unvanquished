@@ -461,6 +461,10 @@ static void CG_Obituary( entityState_t *ent )
 				messageSuicide = G_( "%s%s ^*was blown up" );
 				break;
 
+			case MOD_CRATE:
+				message = G_( "%s%s ^*was bashed by %s%s%s^*'s crate" );
+				messageAssisted = G_( "%s%s ^*was bashed by %s%s%s^*'s crate; %s%s%s^* assisted" );
+
 			case MOD_FIREBOMB:
 				message = G_( "%s%s ^*was incinerated by %s%s%s^*'s firebomb" );
 				messageAssisted = G_( "%s%s ^*was incinerated by %s%s%s^*'s firebomb; %s%s%s^* assisted" );

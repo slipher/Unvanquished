@@ -18,3 +18,11 @@ URL: https://freesound.org/people/Clearwavsound/sounds/524610/
 Conversion: ffmpeg -i assetsrc/524610__clearwavsound__fruit-crack.wav -c:a libopus -af volume=9dB sounds/health-get.opus
 Files:
     sounds/health-get.wav
+
+*** Crate break sound ***
+License: CC0
+Author: Deathscyp
+URL: https://freesound.org/people/Deathscyp/sounds/443293/
+Conversion: ffmpeg -i assetsrc/443293__deathscyp__wood-break.wav -c:a libopus -af volume=-9dB sounds/crate-break.opus
+Files:
+    sounds/crate-break.wav
