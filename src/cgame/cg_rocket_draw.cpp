@@ -2639,13 +2639,9 @@ public:
 			return;
 		}
 		position_ = newPosition;
-		if ( position_ == 1 )
+
 		{
-			SetText( _( "You are at the front of the spawn queue" ) );
-		}
-		else
-		{
-			SetText( va( _( "You are at position %d in the spawn queue" ), position_ ) );
+			SetText( va( _( "You are at position %d in the queue" ), position_ ) );
 		}
 
 		if ( !IsVisible() )
