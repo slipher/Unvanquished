@@ -10,3 +10,11 @@ Files:
 Derived files:
     models/crate-green.png
     models/crate-orange.png
+
+*** Health get sound ***
+License: CC Attribution 3.0
+Author: Clearwavsound
+URL: https://freesound.org/people/Clearwavsound/sounds/524610/
+Conversion: ffmpeg -i assetsrc/524610__clearwavsound__fruit-crack.wav -c:a libopus -af volume=9dB sounds/health-get.opus
+Files:
+    sounds/health-get.wav

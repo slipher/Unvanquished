@@ -560,6 +560,7 @@ static void CG_RegisterSounds()
 	cgs.media.selectSound = trap_S_RegisterSound( "sound/weapons/change", false );
 	cgs.media.turretSpinupSound = trap_S_RegisterSound( "sound/buildables/mgturret/spinup", false );
 	cgs.media.weaponEmptyClick = trap_S_RegisterSound( "sound/weapons/click", false );
+	cgs.media.healthGetSound = trap_S_RegisterSound( "sounds/health-get", false );
 
 	cgs.media.talkSound = trap_S_RegisterSound( "sound/feedback/talk", false );
 	cgs.media.alienTalkSound = trap_S_RegisterSound( "sound/feedback/alien_talk", false );

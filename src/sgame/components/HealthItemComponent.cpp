@@ -17,5 +17,7 @@ void HealthItemComponent::CheckPickup(int)
 		// dead players intentionally included
 		player.Heal(7, entity.oldEnt);
 		entity.FreeAt(DeferredFreeingComponent::FREE_AFTER_THINKING);
+		// TODO: client-side prediction
+		G_AddEvent(player.oldEnt, EV_BASH_HEALTH_GET, 0);
 	});
 }

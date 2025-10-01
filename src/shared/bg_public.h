@@ -763,6 +763,8 @@ enum entity_event_t
   EV_JETPACK_START,   // start thrusting
   EV_JETPACK_STOP,    // stop thrusting
 
+  EV_BASH_HEALTH_GET,
+
   EV_NOAMMO,
   EV_CHANGE_WEAPON,
   EV_FIRE_WEAPON,

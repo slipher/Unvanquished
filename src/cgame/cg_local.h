@@ -1537,6 +1537,7 @@ struct cgMedia_t
 
 	// sounds
 	sfxHandle_t weaponEmptyClick;
+	sfxHandle_t healthGetSound;
 	sfxHandle_t selectSound;
 	sfxHandle_t footsteps[ FOOTSTEP_TOTAL ][ 4 ];
 	sfxHandle_t talkSound;

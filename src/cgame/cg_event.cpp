@@ -785,7 +785,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position )
 				}
 				else
 				{
-					trap_S_StartSound( nullptr, es->number, soundChannel_t::CHAN_BODY,
+					trap_S_StartSound( nullptr, es->number, soundChannel_t::CHAN_ITEM,
 					                   cgs.media.footsteps[ FOOTSTEP_METAL ][ rand() & 3 ] );
 				}
 			}
@@ -1014,6 +1014,9 @@ void CG_EntityEvent( centity_t *cent, vec3_t position )
 		case EV_NOAMMO:
 			trap_S_StartSound( nullptr, es->number, soundChannel_t::CHAN_WEAPON, cgs.media.weaponEmptyClick );
 			break;
+
+		case EV_BASH_HEALTH_GET:
+			trap_S_StartSound( nullptr, es->number, soundChannel_t::CHAN_BODY, cgs.media.healthGetSound );
 
 		case EV_CHANGE_WEAPON:
 			//trap_S_StartSound( nullptr, es->number, soundChannel_t::CHAN_AUTO, cgs.media.selectSound );
