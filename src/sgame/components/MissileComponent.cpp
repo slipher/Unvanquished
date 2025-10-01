@@ -193,6 +193,7 @@ void MissileComponent::Explode()
 
 	// turn the missile into an event carrier
 	ent->s.eType = entityType_t::ET_INVISIBLE;
+	ent->r.contents = 0;
 	ent->freeAfterEvent = true;
 	G_AddEvent(ent, EV_MISSILE_HIT_ENVIRONMENT, DirToByte(dir));
 
