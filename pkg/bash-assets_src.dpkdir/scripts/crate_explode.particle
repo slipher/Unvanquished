@@ -23,7 +23,7 @@ particles/bash/crate_explode/trail
 			lifeTime 4500
 		}
 
-		count 4
+		count 1
 		delay 50
 		period 40 - 0
 	}
@@ -63,35 +63,7 @@ particles/bash/crate_explode
 		delay 0
 		period 0 - ~0%
 	}
-	ejector
-	{
-		particle
-		{
-			displacement 0 0 0 ~0
 
-			velocityType static
-			velocityDir linear
-			velocityMagnitude 750
-			velocity 0 0 1 ~90
-
-			accelerationType static
-			accelerationDir linear
-			accelerationMagnitude 1700
-			acceleration 0 0 -1 0
-
-			radius 0 50 15
-			alpha 0 1 1
-			bounce 0
-			rotation 0 0 50
-			lifeTime 180
-
-			childTrailSystem trails/bash/crate_explode/puff
-		}
-
-		count 10~50%
-		delay 0
-		period 0 1 4~10%
-	}
 	ejector
 	{
 		particle
