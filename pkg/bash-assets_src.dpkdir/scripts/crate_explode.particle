@@ -1,0 +1,122 @@
+particles/bash/crate_explode/trail
+{
+	ejector
+	{
+		particle
+		{
+			shader sync gfx/weapons/grenade/smoke
+
+			displacement 0 0 -40 ~60
+
+			velocityType static
+			velocityDir linear
+			velocityMagnitude 5
+			velocity 0 0 1 ~360
+
+			radius 0 105~75% 65~75%
+			alpha 0 .6 0
+			rotation 0 ~360 -
+			bounce 0
+
+			//overdrawProtection
+
+			lifeTime 4500
+		}
+
+		count 4
+		delay 50
+		period 40 - 0
+	}
+}
+
+particles/bash/crate_explode
+{
+	ejector
+	{
+		particle
+		{
+			shader sync gfx/weapons/flamer/flame/flame02 gfx/weapons/flamer/flame/flame03 gfx/weapons/flamer/flame/flame04 gfx/weapons/flamer/flame/flame05 gfx/weapons/flamer/flame/flame06 gfx/weapons/flamer/flame/flame07 gfx/weapons/flamer/flame/flame08 gfx/weapons/flamer/flame/flame09 gfx/weapons/flamer/flame/flame10 gfx/weapons/flamer/flame/flame11 gfx/weapons/flamer/flame/flame12 gfx/weapons/flamer/flame/flame13 gfx/weapons/flamer/flame/flame14 gfx/weapons/flamer/flame/flame15 gfx/weapons/flamer/flame/flame16 gfx/weapons/flamer/flame/flame17 gfx/weapons/flamer/flame/flame18 gfx/weapons/flamer/flame/flame19 gfx/weapons/flamer/flame/flame20 gfx/weapons/flamer/flame/flame21 gfx/weapons/flamer/flame/flame22 gfx/weapons/flamer/flame/flame23 gfx/weapons/flamer/flame/flame24
+
+			displacement 0 0 11 ~10
+
+			velocityType static
+			velocityDir linear
+			velocityMagnitude 150~75%
+			velocity 0 0 1 ~45
+
+			accelerationType static
+			accelerationDir linear
+			accelerationMagnitude 10
+			acceleration 0 0 -1 0
+
+			radius 0 25~75% 75~75%
+			alpha 500 1 0
+			rotation 0 ~360 -
+			bounce 0
+
+			lifeTime 500
+
+			childSystem particles/bash/crate_explode/trail
+		}
+
+		count 2
+		delay 0
+		period 0 - ~0%
+	}
+	ejector
+	{
+		particle
+		{
+			displacement 0 0 0 ~0
+
+			velocityType static
+			velocityDir linear
+			velocityMagnitude 750
+			velocity 0 0 1 ~90
+
+			accelerationType static
+			accelerationDir linear
+			accelerationMagnitude 1700
+			acceleration 0 0 -1 0
+
+			radius 0 50 15
+			alpha 0 1 1
+			bounce 0
+			rotation 0 0 50
+			lifeTime 180
+
+			childTrailSystem trails/bash/crate_explode/puff
+		}
+
+		count 10~50%
+		delay 0
+		period 0 1 4~10%
+	}
+	ejector
+	{
+		particle
+		{
+			shader sync gfx/weapons/grenade/flare
+
+			displacement 0 0 8 ~0
+
+			velocityType static
+			velocityDir linear
+			velocityMagnitude 0
+			velocity 0 0 1 ~60
+
+			radius 0 0 140
+			alpha 0 1 0
+			rotation 0 ~360 -
+			bounce 0
+
+			dynamicLight 0 500 0 { 1 1 .8 }
+
+			lifeTime 125
+		}
+
+		count 1
+		delay 0
+		period 0 - ~0%
+	}
+}
