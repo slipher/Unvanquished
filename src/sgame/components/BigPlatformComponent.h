@@ -22,6 +22,7 @@ class BigPlatformComponent: public BigPlatformComponentBase {
 
 		void CleanUp();
 		void StartRound(const std::vector<gentity_t*>& players);
+		void StartRound();
 		void Bounds(vec3_t mins, vec3_t maxs);
 
 	private:

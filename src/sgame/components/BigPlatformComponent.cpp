@@ -284,3 +284,20 @@ void BigPlatformComponent::StartRound(const std::vector<gentity_t*>& players)
 	Countdown(0);
 	REGISTER_THINKER(Countdown, ThinkingComponent::SCHEDULER_AVERAGE, 1000);
 }
+
+// using spawn queue
+void BigPlatformComponent::StartRound()
+{
+	if (playing_) {
+		Log::Warn("already playing");
+		return;
+	}
+
+	std::vector<gentity_t*> players;
+	while (players.size() < MAX_PLAYERS) {
+		int next = G_PopSpawnQueue( &level.team[ TEAM_HUMANS ].spawnQueue );
+		if (next < 0) break;
+		players.push_back(g_entities + next);
+	}
+	StartRound(players);
+}

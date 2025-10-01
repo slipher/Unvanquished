@@ -1959,12 +1959,6 @@ bool bashRound;
 
 void SetUpBashRound()
 {
-	std::vector<gentity_t*> players;
-	ForEntities<ClientComponent>([&](Entity& entity, ClientComponent& client) {
-		if (players.size() == 4) return;
-		if (entity.oldEnt->client->pers.team == TEAM_HUMANS)
-			players.push_back(entity.oldEnt);
-	});
 	BigPlatformComponent* platform = nullptr;
 	ForEntities<BigPlatformComponent>([&](Entity&, BigPlatformComponent& component) {
 		platform = &component;
@@ -1973,7 +1967,7 @@ void SetUpBashRound()
 		Log::Warn("no bigplatform");
 		return;
 	}
-	platform->StartRound(players);
+	platform->StartRound();
 	bashRound = true;
 }
 
