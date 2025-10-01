@@ -1,0 +1,12 @@
+*** "crate-box" model ***
+License: CC Attribution 4.0
+Author: KloWorks
+URL: https://sketchfab.com/3d-models/crate-box-e1a6856037c54d0d9019aedf61315569
+Converted FBX to md5mesh using Noesis version 4451.
+Files:
+    models/crate-box.md5mesh
+    models/vil_p_crate06_d.png
+    models/vil_p_crate06_n.png
+Derived files:
+    models/crate-green.png
+    models/crate-orange.png
