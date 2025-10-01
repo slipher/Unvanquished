@@ -1,0 +1,16 @@
+{
+"classname" "worldspawn"
+"mapOverbrightBits" "0"
+}
+{
+"origin" "348 76 108"
+"classname" "info_alien_intermission"
+}
+{
+"origin" "320 28 236"
+"classname" "info_human_intermission"
+}
+{
+"origin" "336 -36 236"
+"classname" "info_player_intermission"
+}
