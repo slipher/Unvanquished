@@ -616,8 +616,8 @@ void CG_InitConsoleCommands()
 
 	// defined in enum buttonNumber_t in file src/shared/bg_public.h
 	trap_RegisterButtonCommands(
-	    // 0      123     45      6        78       9       ABCD           E      <- bit nos.
-	      "attack,,,taunt,,sprint,activate,,attack2,attack3,,,,deconstruct,rally"
+	    // 0      123     456        78       9       ABCD           E      <- bit nos.
+	      "attack,,,taunt,,,activate,,attack2,attack3,,,,deconstruct,rally"
 	    );
 }
 
