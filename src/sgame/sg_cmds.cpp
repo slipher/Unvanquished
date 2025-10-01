@@ -3005,7 +3005,6 @@ static void Cmd_Build_f( gentity_t *ent )
 	buildable = BG_BuildableByName( s )->number;
 
 	if ( buildable != BA_NONE &&
-	     ( ( 1 << ent->client->ps.weapon ) & BG_Buildable( buildable )->buildWeapon ) &&
 	     !BG_BuildableDisabled( buildable ) && BG_BuildableUnlocked( buildable ) )
 	{
 		dynMenu_t err;

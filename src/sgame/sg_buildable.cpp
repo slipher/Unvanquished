@@ -1255,6 +1255,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int /*distan
 	}
 	else if ( ent->client->pers.team == TEAM_ALIENS )
 	{
+#if 0
 		// Check for Overmind
 		if ( buildable != BA_A_OVERMIND )
 		{
@@ -1263,6 +1264,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int /*distan
 				reason = IBE_NOOVERMIND;
 			}
 		}
+#endif
 
 		// Check surface permissions
 		bool invalid = (tr1.contents & (CUSTOM_CONTENTS_NOALIENBUILD | CUSTOM_CONTENTS_NOBUILD)) || (contents & (CUSTOM_CONTENTS_NOALIENBUILD | CUSTOM_CONTENTS_NOBUILD));
