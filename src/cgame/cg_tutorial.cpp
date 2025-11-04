@@ -652,19 +652,6 @@ const std::string& CG_BashTutorialText()
 
 	if (!cg.demoPlayback)
 	{
-		if (!CG_ClientIsReady(ps->clientNum))
-		{
-			text += va(_("Press %s when ready to continue."), CG_KeyNameForCommand("+attack"));
-		}
-		else
-		{
-			text += _("Waiting for other players to be ready.");
-		}
-		text += '\n';
-	}
-
-	if (!cg.demoPlayback)
-	{
 		text += '\n';
 		text += va(_("Press %s to chat."), CG_KeyNameForCommand("message_public"));
 		text += '\n';
