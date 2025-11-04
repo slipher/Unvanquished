@@ -342,8 +342,9 @@ enum weaponstate_t
 #define PMF_TIME_WALLJUMP  BIT(13) // for limiting wall jumping
 #define PMF_CHARGE         BIT(14) // keep track of pouncing (and trampling it seems?)
 #define PMF_WEAPON_SWITCH  BIT(15) // force a weapon switch
+#define PMF_TIME_BASH_LAND BIT(16) // limit jump after landing
 
-#define PMF_ALL_TIMES      ( PMF_TIME_WATERJUMP | PMF_TIME_KNOCKBACK | PMF_TIME_WALLJUMP )
+#define PMF_ALL_TIMES      ( PMF_TIME_WATERJUMP | PMF_TIME_KNOCKBACK | PMF_TIME_WALLJUMP | PMF_TIME_BASH_LAND )
 
 struct pmoveExt_t
 {

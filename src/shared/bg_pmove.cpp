@@ -1541,6 +1541,11 @@ static bool PM_CheckJump()
 		return false;
 	}
 
+	if ( pm->ps->pm_flags & PMF_TIME_BASH_LAND )
+	{
+		return false;
+	}
+
 	// check if holding jump key
 	if ( pm->cmd.upmove < 10 )
 	{
@@ -2232,6 +2237,9 @@ static void PM_Land()
 
 	// potential jump ended
 	pm->ps->pm_flags &= ~(PMF_JUMPED | PMF_BACKWARDS_JUMP);
+
+	pm->ps->pm_flags |= PMF_TIME_BASH_LAND;
+	pm->ps->pm_time = 400;
 }
 
 /*

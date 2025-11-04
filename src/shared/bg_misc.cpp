@@ -2615,7 +2615,7 @@ static const NetcodeTable playerStateFields =
 	{ PSF( commandTime       ), 32               , 0 },
 	{ PSF( pm_type           ), 8                , 0 },
 	{ PSF( bobCycle          ), 8                , 0 },
-	{ PSF( pm_flags          ), 16               , 0 },
+	{ PSF( pm_flags          ), 17               , 0 },
 	{ PSF( pm_time           ), -16              , 0 },
 	{ PSF( lowOxygenTime     ), LOW_OXYGEN_TIME_BITS, 0 },
 	{ PSF( origin[ 0 ]       ), 0                , 0 },
