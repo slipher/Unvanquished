@@ -857,6 +857,7 @@ static void CG_RegisterGraphics()
 	cgs.media.sphericalCone240Model = trap_R_RegisterModel( "models/generic/sphericalCone240.md3" );
 
 	cgs.media.plainColorShader = trap_R_RegisterShader("gfx/colors/plain", RSF_DEFAULT);
+	cgs.media.bashInvulnerableShader = trap_R_RegisterShader("bash/invulnerable", RSF_DEFAULT);
 	
 	if ( cg_rangeMarkerDrawFrontline.Get() || cg_rangeMarkerDrawIntersection.Get() )
 	{

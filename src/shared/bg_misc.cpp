@@ -1497,6 +1497,11 @@ static void PlayerStateToEntityState( playerState_t *ps, entityState_t *s )
 		s->modelindex2 |= PF_JETPACK_ACTIVE;
 	}
 
+	if ( ps->stats[ STAT_STATE2 ] & SS2_BASH_INVULNERABLE )
+	{
+		s->modelindex2 |= PF_BASH_INVULNERABLE;
+	}
+
 	if ( ps->stats[ STAT_STATE ] & SS_BLOBLOCKED )
 	{
 		s->modelindex2 |= PF_BLOBLOCKED;

@@ -455,6 +455,7 @@ enum statIndex_t
 #define SS2_JETPACK_WARM    BIT(1)  // whether we can start a thrust
 #define SS2_JETPACK_ACTIVE  BIT(2)  // whether we are thrusting
 #define SS2_LEVEL1SLOW      BIT(3)  // hit and slowed by a Mantis attack
+#define SS2_BASH_INVULNERABLE BIT(9)
 
 // has to fit into 16 bits
 #define SB_BUILDABLE_MASK        0x00FF
@@ -565,6 +566,7 @@ enum persEnum_t
 #define PF_JETPACK_ENABLED  BIT(0)
 #define PF_JETPACK_ACTIVE   BIT(1)
 #define PF_BLOBLOCKED       BIT(2) // caught by a trapper
+#define PF_BASH_INVULNERABLE BIT(3)
 // PF_xxx can go up to BIT(MODELINDEX_BITS - 1)
 
 enum weaponMode_t

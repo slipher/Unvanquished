@@ -92,6 +92,15 @@ components:
             Health:
             Thinking:
 
+    Invulnerability:
+        messages:
+            Damage:
+            ApplyDamageModifier:
+            PrepareNetCode:
+            Die:
+        requires:
+            Client:
+
     HealthItem:
         requires:
             Thinking:
@@ -453,6 +462,7 @@ entities:
     Human:
         components:
             HumanClass:
+            Invulnerability:
 
     ######################
     # Buildable Entities #

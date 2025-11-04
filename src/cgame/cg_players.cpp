@@ -2780,9 +2780,15 @@ void CG_Player( centity_t *cent )
 		CG_DrawBoundingBox( cg_drawBBOX.Get(), cent->lerpOrigin, mins, maxs );
 	}
 
+	refEntity_t sharedEffects{};
+	if ( es->modelindex2 & PF_BASH_INVULNERABLE && cg.time & 128 )
+	{
+		sharedEffects.customShader = cgs.media.bashInvulnerableShader;
+	}
+
 	// NOTE: legs is used for nonsegmented and skeletal models
 	//       this helps reduce code to be changed
-	refEntity_t legs{}, torso{}, head{};
+	refEntity_t legs = sharedEffects, torso = sharedEffects, head = sharedEffects;
 
 	VectorCopy( cent->lerpAngles, angles );
 	AnglesToAxis( cent->lerpAngles, tempAxis );

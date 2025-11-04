@@ -27,3 +27,13 @@ bash/crate-box-green
 		normalMap   models/vil_p_crate06_n
 	}
 }
+
+bash/invulnerable
+{
+	{
+		blendfunc blend
+		map $white
+		rgbGen const (0.1 0.1 0.1)
+		alphaGen const 0.2
+	}
+}

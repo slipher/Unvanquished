@@ -327,6 +327,8 @@ set(SGAMELIST
     ${GAMELOGIC_DIR}/sgame/components/InertCrateComponent.h
     ${GAMELOGIC_DIR}/sgame/components/RestingCrateComponent.cpp
     ${GAMELOGIC_DIR}/sgame/components/RestingCrateComponent.h
+    ${GAMELOGIC_DIR}/sgame/components/InvulnerabilityComponent.cpp
+    ${GAMELOGIC_DIR}/sgame/components/InvulnerabilityComponent.h
     ${GAMELOGIC_DIR}/sgame/components/HealthItemComponent.cpp
     ${GAMELOGIC_DIR}/sgame/components/HealthItemComponent.h
     ${GAMELOGIC_DIR}/sgame/components/RocketMissileComponent.cpp

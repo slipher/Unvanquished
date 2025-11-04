@@ -1527,6 +1527,7 @@ struct cgMedia_t
 	qhandle_t             sphericalCone240Model;
 
 	qhandle_t             plainColorShader;
+	qhandle_t bashInvulnerableShader;
 	bool binaryShadersLoaded;
 	qhandle_t             binaryAlpha1Shader;
 	cgMediaBinaryShader_t binaryShaders[ NUM_BINARY_SHADERS ];
