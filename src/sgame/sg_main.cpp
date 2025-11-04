@@ -230,7 +230,7 @@ Cvar::Cvar<int> g_teamStatus("g_teamStatus", "allow /teamstatus command. 0 = dis
 
 Cvar::Cvar<int> g_tacticMilliseconds("g_tacticMilliseconds", "clients can only /tactic every <g_tacticMilliseconds> milliseconds, -1 = disabled.", Cvar::NONE, 1000);
 
-Cvar::Cvar<std::string> g_defaultLayouts("g_defaultLayouts", "layouts to pick randomly from each map", Cvar::NONE, "");
+Cvar::Cvar<std::string> g_defaultLayouts("g_defaultLayouts", "layouts to pick randomly from each map", Cvar::NONE, "cratebash");
 Cvar::Cvar<std::string> g_layouts("g_layouts", "layouts for next map (cleared after use)", Cvar::NONE, "");
 Cvar::Cvar<bool> g_layoutAuto("g_layoutAuto", "pick arbitrary layout instead of builtin", Cvar::NONE, false);
 
