@@ -1491,27 +1491,15 @@ static void PlayerStateToEntityState( playerState_t *ps, entityState_t *s )
 	{
 		s->modelindex2 |= PF_JETPACK_ENABLED;
 	}
-	else
-	{
-		s->modelindex2 &= ~PF_JETPACK_ENABLED;
-	}
 
 	if ( ps->stats[ STAT_STATE2 ] & SS2_JETPACK_ACTIVE )
 	{
 		s->modelindex2 |= PF_JETPACK_ACTIVE;
 	}
-	else
-	{
-		s->modelindex2 &= ~PF_JETPACK_ACTIVE;
-	}
 
 	if ( ps->stats[ STAT_STATE ] & SS_BLOBLOCKED )
 	{
 		s->modelindex2 |= PF_BLOBLOCKED;
-	}
-	else
-	{
-		s->modelindex2 &= ~PF_BLOBLOCKED;
 	}
 
 	// use misc field to store team/class info:
