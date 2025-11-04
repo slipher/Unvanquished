@@ -416,8 +416,6 @@ static void CG_MapRestart()
 	trap_S_ClearLoopingSounds( true );
 
 	// we really should clear more parts of cg here and stop sounds
-
-	cg_thirdPerson.Set(false);
 }
 
 /*
