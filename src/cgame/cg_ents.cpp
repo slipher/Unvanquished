@@ -1404,8 +1404,8 @@ void CG_AddPacketEntities()
 					break;
 
 				case entityType_t::ET_FIRE:
-					CG_DrawSphere( es->origin, FIRE_DAMAGE_RADIUS,
-					               cgs.media.plainColorShader, Color::Color(1, 0, 0, 0.2) );
+					//CG_DrawSphere( es->origin, FIRE_DAMAGE_RADIUS,
+					//               cgs.media.plainColorShader, Color::Color(1, 0, 0, 0.2) );
 					break;
 
 				default:
