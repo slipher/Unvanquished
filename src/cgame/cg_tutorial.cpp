@@ -77,7 +77,7 @@ static void CG_RefreshBindings()
 		binds.push_back(bind.command);
 	}
 
-	std::vector<std::vector<Keyboard::Key>> keys = trap_Key_GetKeysForBinds(CG_CurrentBindTeam(), binds);
+	std::vector<std::vector<Keyboard::Key>> keys = trap_Key_GetKeysForBinds(TEAM_HUMANS, binds);
 
 	for (unsigned i = 0; i < numBindings; i++) {
 		bindings[i].keys = keys[i];
@@ -622,6 +622,59 @@ const std::string& CG_TutorialText()
 		text += va( _( "Press %s to open the console." ), CG_KeyNameForCommand( OPEN_CONSOLE_CMD ) );
 		text += '\n';
 		text += va( _( "Press %s for the menu." ), CG_KeyNameForCommand( OPEN_MENU_CMD ) );
+	}
+
+	return text;
+}
+
+/*
+===============
+CG_BashTutorialText
+
+Returns context help for crate bash game
+===============
+*/
+const std::string& CG_BashTutorialText()
+{
+	playerState_t* ps;
+	static std::string text;
+	static int    refreshBindings = 0;
+
+	text.clear();
+	ps = &cg.snap->ps;
+
+	if (refreshBindings == 0)
+	{
+		CG_RefreshBindings();
+	}
+
+	refreshBindings = (refreshBindings + 1) % BINDING_REFRESH_INTERVAL;
+
+	if (!cg.demoPlayback)
+	{
+		if (!CG_ClientIsReady(ps->clientNum))
+		{
+			text += va(_("Press %s when ready to continue."), CG_KeyNameForCommand("+attack"));
+		}
+		else
+		{
+			text += _("Waiting for other players to be ready.");
+		}
+		text += '\n';
+	}
+
+	if (!cg.demoPlayback)
+	{
+		text += '\n';
+		text += va(_("Press %s to chat."), CG_KeyNameForCommand("message_public"));
+		text += '\n';
+		text += va(_("Press %s to open the console."), CG_KeyNameForCommand(OPEN_CONSOLE_CMD));
+		text += '\n';
+		text += va(_("Press %s for the menu."), CG_KeyNameForCommand(OPEN_MENU_CMD));
+		text += '\n';
+		text += va(_("Press %s to pick up a crate."), CG_KeyNameForCommand("+activate"));
+		text += '\n';
+		text += va(_("Press %s to throw a crate."), CG_KeyNameForCommand("+attack"));
 	}
 
 	return text;

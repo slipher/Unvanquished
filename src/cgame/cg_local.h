@@ -2278,7 +2278,7 @@ void          CG_DestroyTestTS_f();
 //
 // cg_tutorial.c
 //
-const std::string& CG_TutorialText();
+const std::string& CG_BashTutorialText();
 
 //
 // cg_beacon.c
