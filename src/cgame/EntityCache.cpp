@@ -241,7 +241,7 @@ void SyncEntityCacheFromEngine() {
 	std::vector<LerpTagSync> orientations = trap_R_SyncLerpTags( lerpTagUpdates );
 
 	if ( cg_showEntityCacheUpdates.Get() && !( cg.clientFrame % cg_showEntityCacheUpdates.Get() ) ) {
-		Log::defaultLogger.WithoutSuppression().Notice( Str::Format( "Cache sync engine->cgame:" ) );
+		Log::defaultLogger.WithoutSuppression().Notice( "Cache sync engine->cgame:" );
 
 		for ( uint16_t i = 0; i < orientations.size(); i++ ) {
 			orientation_t& entityOrientation = orientations[i].entityOrientation;
@@ -281,12 +281,12 @@ void SyncEntityCacheFromEngine() {
 
 uint32_t EntityCache::Alloc( const uint32_t count ) {
 	if ( !count ) {
-		Log::Warn( "EntityCache: tried to allocate 0 blocks" );
+		Log::Warn( "EntityCache: tried to allocate 0 entities" );
 		return 0;
 	}
 
 	if ( count > 64 ) {
-		Sys::Drop( "EntityCache: allocation failed: only up to 64 blocks are supported in one allocation, got %u", count );
+		Sys::Drop( "EntityCache: allocation failed: only up to 64 entities are supported in one allocation, got %u", count );
 	}
 
 	for( uint64_t& blockL2 : blocksL2 ) {
@@ -346,7 +346,7 @@ uint32_t EntityCache::Alloc( const uint32_t count ) {
 		}
 	}
 
-	Sys::Drop( "EntityCache: allocation failed: no contiguous memory found for %u blocks", count );
+	Sys::Drop( "EntityCache: allocation failed: no contiguous memory found for %u entities", count );
 }
 
 void EntityCache::Free( const uint32_t offset, const uint32_t count, const bool update ) {
