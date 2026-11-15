@@ -515,21 +515,13 @@ class FpsHudElement : public TextHudElement
 public:
 	FpsHudElement( const Rml::String& tag )
 			: TextHudElement( tag, ELEMENT_ALL ),
-			  showingFps_( false ),
-			  lastFrame_( 0 ),
-			  fps_( 0 ) {}
+			  showingFps_( false ) {}
 
 	void DoOnUpdate() override
 	{
-		// don't use serverTime, because that will be drifting to
-		// correct for Internet lag changes, timescales, timedemos, etc.
-		int t = trap_Milliseconds();
-		Util::UpdateFPSCounter( 1.0f, t - lastFrame_, fps_ );
-		lastFrame_ = t;
-
 		if ( cg_drawFPS.Get() )
 		{
-			SetText( Str::Format("%.0f", fps_) );
+			SetText( Str::Format("%.0f", rocketInfo.fps) );
 			showingFps_ = true;
 		}
 		else if ( showingFps_ )
@@ -541,8 +533,6 @@ public:
 
 private:
 	bool showingFps_;
-	int lastFrame_;
-	float fps_;
 };
 
 #define CROSSHAIR_INDICATOR_HITFADE 500

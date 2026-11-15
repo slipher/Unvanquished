@@ -1455,6 +1455,8 @@ struct rocketInfo_t
 	int serverStatusLastRefresh;
 	int realtime;
 	int keyCatcher;
+	int fpsFrameTime;
+	float fps;
 	char downloadName[ MAX_STRING_CHARS ];
 	cgClientState_t cstate;
 	rocketMenu_t menu[ Util::ordinal(rocketMenuType_t::ROCKETMENU_NUM_TYPES) ];

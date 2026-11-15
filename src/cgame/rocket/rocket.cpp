@@ -512,8 +512,17 @@ void Rocket_Render()
 
 }
 
+static void UpdateFps()
+{
+	int t = trap_Milliseconds();
+	Util::UpdateFPSCounter( 1.0f, t - rocketInfo.fpsFrameTime, rocketInfo.fps );
+	rocketInfo.fpsFrameTime = t;
+}
+
 void Rocket_Update()
 {
+	UpdateFps();
+
 	if ( CG_AnyMenuOpen() )
 	{
 		menuContext->Update();
