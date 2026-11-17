@@ -251,11 +251,19 @@ public:
 		if (CG_Rocket_IsCommandAllowed(type))
 		{
 			DoOnRender();
+			if ( RecordingUIRender() )
+			{
+				RecordUICommand( [this] { DoOnRender(); } );
+			}
+
 			Rml::Element::OnRender();
 		}
 	}
 
+	// DoOnRender should send only Daemon native API rendering commands. Nothing through
+	// RmlUi's DaemonRenderInterface.
 	virtual void DoOnRender() {}
+
 	virtual void DoOnUpdate() {}
 
 	bool GetIntrinsicDimensions( Rml::Vector2f &dimension, float& /*ratio*/ ) override
@@ -3894,6 +3902,15 @@ void CG_Rocket_RenderElement( const char *tag )
 	if ( cmd && cmd->render && CG_Rocket_IsCommandAllowed( cmd->type ) )
 	{
 		cmd->render();
+
+		if ( RecordingUIRender() )
+		{
+			extern Rml::Element *activeElement;
+			RecordUICommand( [func = cmd->render, elem = activeElement] {
+				activeElement = elem;
+				func();
+			} );
+		}
 	}
 }
 

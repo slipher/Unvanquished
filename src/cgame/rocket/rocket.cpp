@@ -202,14 +202,41 @@ static qhandle_t whiteShader;
 // TODO: CompileGeometry, RenderCompiledGeometry, ReleaseCompileGeometry ( use vbos and ibos )
 class DaemonRenderInterface : public Rml::RenderInterface
 {
+	bool recording_;
+	std::vector<std::function<void()> > commands_;
+
+	friend bool RecordingUIRender();
+	friend void RecordUICommand( std::function<void()> cmd );
+
 public:
 	DaemonRenderInterface() { }
+
+	void StartRecording()
+	{
+		commands_.clear();
+		recording_ = true;
+	}
+
+	void StopRecording()
+	{
+		recording_ = false;
+	}
+
+	void Replay() const
+	{
+		for ( const auto& f : commands_ )
+		{
+			f();
+		}
+	}
 
 	void RenderGeometry( Rml::Vertex *verticies,  int numVerticies, int *indices, int numIndicies, Rml::TextureHandle texture, const Rml::Vector2f& translation ) override
 	{
 		polyVert_t *verts = createVertexArray( verticies, numVerticies );
 		trap_R_Add2dPolysIndexedToScene( verts, numVerticies, indices, numIndicies, translation.x, translation.y, texture ? ( qhandle_t ) texture : whiteShader );
 		delete[]  verts;
+
+		// Recording not necessary since this function is only used by the debugger.
 	}
 
 	Rml::CompiledGeometryHandle CompileGeometry( Rml::Vertex *vertices, int num_vertices, int *indices, int num_indices, Rml::TextureHandle texture ) override
@@ -224,6 +251,12 @@ public:
 	{
 		RocketCompiledGeometry *g = ( RocketCompiledGeometry * ) geometry;
 		trap_R_Add2dPolysIndexedToScene( g->verts, g->numVerts, g->indices, g->numIndicies, translation.x, translation.y, g->shader );
+
+		if ( recording_ )
+		{
+			// HACK: assume the compiled geometry won't be deleted in the same Render() cycle
+			commands_.push_back( [=] { trap_R_Add2dPolysIndexedToScene( g->verts, g->numVerts, g->indices, g->numIndicies, translation.x, translation.y, g->shader ); } );
+		}
 	}
 
 	void ReleaseCompiledGeometry( Rml::CompiledGeometryHandle geometry ) override
@@ -264,11 +297,21 @@ public:
 	{
 		trap_R_ScissorEnable( enable );
 
+		if ( recording_ )
+		{
+			commands_.push_back( [=] { trap_R_ScissorEnable( enable ); } );
+		}
 	}
 
 	void SetScissorRegion( int x, int y, int width, int height ) override
 	{
-		trap_R_ScissorSet( x, cgs.windowConfig.vidHeight - ( y + height ), width, height );
+		int y2 = cgs.windowConfig.vidHeight - ( y + height );
+		trap_R_ScissorSet( x, y2, width, height );
+
+		if ( recording_ )
+		{
+			commands_.push_back( [=] { trap_R_ScissorSet( x, y2, width, height ); } );
+		}
 	}
 
 	void SetTransform( const Rml::Matrix4f* matrix ) override
@@ -276,10 +319,20 @@ public:
 		if ( matrix )
 		{
 			trap_R_SetMatrixTransform( matrix->data() );
+
+			if ( recording_ )
+			{
+				commands_.push_back( [matrix = *matrix] { trap_R_SetMatrixTransform( matrix.data() ); } );
+			}
 		}
 		else
 		{
 			trap_R_ResetMatrixTransform();
+
+			if ( recording_ )
+			{
+				commands_.push_back( trap_R_ResetMatrixTransform );
+			}
 		}
 	}
 
@@ -365,6 +418,16 @@ Rml::PropertyId UnvPropertyId::Orientation;
 
 // TODO
 // cvar_t *cg_draw2D;
+
+bool RecordingUIRender()
+{
+	return renderInterface.recording_;
+}
+
+void RecordUICommand( std::function<void()> cmd )
+{
+	renderInterface.commands_.push_back( std::move( cmd ) );
+}
 
 void Rocket_Init()
 {
@@ -494,12 +557,26 @@ bool CG_AnyMenuOpen()
 	return fm.GetState() != VisibleMenusState::NONE;
 }
 
+static Cvar::Range<Cvar::Cvar<int> > cg_hudUpdateSkipFrames(
+	"cg_hudUpdateSkipFrames", "re-render HUD every N+1 frames", Cvar::NONE, 0, 0, 5);
 void Rocket_Render()
 {
 	// cg.snap is not available on the first frame but some HUD code accesses it
 	if ( cg_draw2D.Get() && hudContext && cg.snap )
 	{
-		hudContext->Render();
+		if ( rocketInfo.framesUntilHudUpdate > 0 )
+		{
+			renderInterface.Replay();
+			--rocketInfo.framesUntilHudUpdate;
+		}
+		else
+		{
+			rocketInfo.framesUntilHudUpdate = cg_hudUpdateSkipFrames.Get();
+			if ( rocketInfo.framesUntilHudUpdate > 0 )
+				renderInterface.StartRecording();
+			hudContext->Render();
+			renderInterface.StopRecording();
+		}
 	}
 
 	// Render menus on top of the HUD
@@ -519,8 +596,7 @@ static void UpdateFps()
 	rocketInfo.fpsFrameTime = t;
 }
 
-static Cvar::Range<Cvar::Cvar<int> > cg_hudUpdateSkipFrames(
-	"cg_hudUpdateSkipFrames", "update HUD only every N frames", Cvar::NONE, 1, 1, 5);
+
 void Rocket_Update()
 {
 	UpdateFps();
@@ -532,8 +608,7 @@ void Rocket_Update()
 
 	if ( cg_draw2D.Get() && hudContext && cg.snap )
 	{
-		if ( --rocketInfo.hudUpdateCounter <= 0 ) {
-			rocketInfo.hudUpdateCounter = cg_hudUpdateSkipFrames.Get();
+		if ( rocketInfo.framesUntilHudUpdate <= 0 ) {
 			hudContext->Update();
 		}
 	}

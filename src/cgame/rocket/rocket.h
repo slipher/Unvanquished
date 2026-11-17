@@ -81,6 +81,9 @@ std::string CG_KeyBinding( const char *bind, int team );
 void Rocket_AddEvent( RocketEvent_t *event );
 void Rocket_SetDocumentScale( Rml::ElementDocument& document );
 
+bool RecordingUIRender();
+void RecordUICommand( std::function<void()> cmd );
+
 bool CG_AnyMenuOpen();
 
 struct UnvPropertyId {
