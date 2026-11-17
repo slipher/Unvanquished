@@ -202,14 +202,38 @@ static qhandle_t whiteShader;
 // TODO: CompileGeometry, RenderCompiledGeometry, ReleaseCompileGeometry ( use vbos and ibos )
 class DaemonRenderInterface : public Rml::RenderInterface
 {
+	bool recording_;
+	std::vector<std::function<void()> > commands_;
+
 public:
 	DaemonRenderInterface() { }
+
+	void StartRecording()
+	{
+		commands_.clear();
+		recording_ = true;
+	}
+
+	void StopRecording()
+	{
+		recording_ = false;
+	}
+
+	void Replay() const
+	{
+		for ( const auto& f : commands_ )
+		{
+			f();
+		}
+	}
 
 	void RenderGeometry( Rml::Vertex *verticies,  int numVerticies, int *indices, int numIndicies, Rml::TextureHandle texture, const Rml::Vector2f& translation ) override
 	{
 		polyVert_t *verts = createVertexArray( verticies, numVerticies );
 		trap_R_Add2dPolysIndexedToScene( verts, numVerticies, indices, numIndicies, translation.x, translation.y, texture ? ( qhandle_t ) texture : whiteShader );
 		delete[]  verts;
+
+		// Recording not necessary since this function is only used by the debugger.
 	}
 
 	Rml::CompiledGeometryHandle CompileGeometry( Rml::Vertex *vertices, int num_vertices, int *indices, int num_indices, Rml::TextureHandle texture ) override
@@ -224,6 +248,12 @@ public:
 	{
 		RocketCompiledGeometry *g = ( RocketCompiledGeometry * ) geometry;
 		trap_R_Add2dPolysIndexedToScene( g->verts, g->numVerts, g->indices, g->numIndicies, translation.x, translation.y, g->shader );
+
+		if ( recording_ )
+		{
+			// HACK: assume the compiled geometry won't be deleted in the same Render() cycle
+			commands_.push_back( [=] { trap_R_Add2dPolysIndexedToScene( g->verts, g->numVerts, g->indices, g->numIndicies, translation.x, translation.y, g->shader ); } );
+		}
 	}
 
 	void ReleaseCompiledGeometry( Rml::CompiledGeometryHandle geometry ) override
@@ -264,11 +294,21 @@ public:
 	{
 		trap_R_ScissorEnable( enable );
 
+		if ( recording_ )
+		{
+			commands_.push_back( [=] { trap_R_ScissorEnable( enable ); } );
+		}
 	}
 
 	void SetScissorRegion( int x, int y, int width, int height ) override
 	{
-		trap_R_ScissorSet( x, cgs.windowConfig.vidHeight - ( y + height ), width, height );
+		int y2 = cgs.windowConfig.vidHeight - ( y + height );
+		trap_R_ScissorSet( x, y2, width, height );
+
+		if ( recording_ )
+		{
+			commands_.push_back( [=] { trap_R_ScissorSet( x, y2, width, height ); } );
+		}
 	}
 
 	void SetTransform( const Rml::Matrix4f* matrix ) override
@@ -276,10 +316,20 @@ public:
 		if ( matrix )
 		{
 			trap_R_SetMatrixTransform( matrix->data() );
+
+			if ( recording_ )
+			{
+				commands_.push_back( [matrix = *matrix] { trap_R_SetMatrixTransform( matrix.data() ); } );
+			}
 		}
 		else
 		{
 			trap_R_ResetMatrixTransform();
+
+			if ( recording_ )
+			{
+				commands_.push_back( trap_R_ResetMatrixTransform );
+			}
 		}
 	}
 
