@@ -519,6 +519,8 @@ static void UpdateFps()
 	rocketInfo.fpsFrameTime = t;
 }
 
+static Cvar::Range<Cvar::Cvar<int> > cg_hudUpdateSkipFrames(
+	"cg_hudUpdateSkipFrames", "update HUD only every N frames", Cvar::NONE, 1, 1, 5);
 void Rocket_Update()
 {
 	UpdateFps();
@@ -530,7 +532,10 @@ void Rocket_Update()
 
 	if ( cg_draw2D.Get() && hudContext && cg.snap )
 	{
-		hudContext->Update();
+		if ( --rocketInfo.hudUpdateCounter <= 0 ) {
+			rocketInfo.hudUpdateCounter = cg_hudUpdateSkipFrames.Get();
+			hudContext->Update();
+		}
 	}
 	Shared::Lua::UpdateTimers(rocketInfo.realtime);
 }

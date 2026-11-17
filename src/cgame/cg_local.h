@@ -1461,6 +1461,7 @@ struct rocketInfo_t
 	cgClientState_t cstate;
 	rocketMenu_t menu[ Util::ordinal(rocketMenuType_t::ROCKETMENU_NUM_TYPES) ];
 	rocketMenu_t hud[ WP_NUM_WEAPONS ];
+	int hudUpdateCounter;
 	rocketDataSource_t data;
 	bool renderCursor;
 	qhandle_t cursor;
